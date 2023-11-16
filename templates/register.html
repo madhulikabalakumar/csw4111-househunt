@@ -1,0 +1,22 @@
+<!-- register.html -->
+{% extends 'base.html' %}
+
+{% block title %}User Registration{% endblock %}
+
+{% block content %}
+    <h1 class="page-heading">User Registration</h1>
+
+    <form method="POST" action="/register">
+      <label for="account_id">Account ID:</label>
+      <input type="text" name="account_id" required><br>
+
+      <label for="pronouns">Pronouns:</label>
+      <input type="text" name="pronouns" required><br>
+
+      <label for="move_in_date">Move-in Date:</label>
+      <input type="date" name="move_in_date" required><br>
+
+      <input type="submit" value="Register">
+    </form>
+{% endblock %}
+

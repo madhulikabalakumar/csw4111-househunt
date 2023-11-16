@@ -1,0 +1,57 @@
+<html lang="en">
+<head>
+    <title>{% block title %}Lion Housing{% endblock %}</title>
+    
+    <style>
+        body {
+            font-size: 15pt;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f2f2f2;
+            padding: 10px;
+        }
+
+        .auth-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .home-link, .auth-link {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a class="home-link" href="/">Home</a>
+
+        <div class="auth-links">
+            {% if current_user.is_authenticated %}
+                <p>Welcome, {{ current_user.account_id }}! <a href="/logout">Logout</a></p>
+            {% else %}
+                <a class="auth-link" href="/login">Login</a>
+                <a class="auth-link" href="/register">Register</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</body>
+</html>
+

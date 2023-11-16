@@ -12,12 +12,64 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort
+from flask import Flask, request, render_template, g, redirect, Response, abort, flash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+import secrets
+
+class User(UserMixin):
+    def __init__(self, account_id, pronouns, move_in_date):
+        self.account_id = account_id
+        self.pronouns = pronouns
+        self.move_in_date = move_in_date
+
+    def get_id(self):
+        return self.account_id
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
+# Set a secret key for session management
+app.secret_key = secrets.token_hex(16)
 
+# Create the LoginManager instance
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+
+@login_manager.user_loader
+def load_user(account_id):
+    user_data = g.conn.execute("SELECT * FROM CU_User WHERE account_id = %s", account_id).fetchone()
+    if user_data:
+        return User(user_data['account_id'], user_data['pronouns'], user_data['move_in_date'])
+    return None
+
+def does_account_id_exist(account_id):
+    # Execute a SELECT query to check if the account_id exists
+    result = g.conn.execute("SELECT COUNT(*) FROM CU_User WHERE account_id = %s", account_id).fetchone()
+
+    # If result is not None and the count is greater than 0, account_id exists
+    return result is not None and result[0] > 0
+
+def get_all_houses(conn):
+    """
+    Retrieve all houses from the database.
+
+    Parameters:
+    - conn: SQLAlchemy database connection.
+
+    Returns:
+    - List of houses.
+    """
+    try:
+        # Assuming you have a House_Belongs_To_Brokered_By model
+        query = text("SELECT flat_no, bldg_address, bedrooms, bathrooms, price, sq_footage, furnishing_status, availability_status FROM House_Belongs_To_Brokered_By")
+        result = conn.execute(query)
+        houses = [dict(row) for row in result]
+        return houses
+    except Exception as e:
+        print(f"Error fetching houses: {str(e)}")
+        return []
 #
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -56,6 +108,8 @@ def before_request():
   (every time you enter an address in the web browser).
   We use it to setup a database connection that can be used throughout the request.
 
+  We use it to setup a database connection that can be used throughout the request.
+
   The variable g is globally accessible.
   """
   try:
@@ -64,6 +118,11 @@ def before_request():
     print("uh oh, problem connecting to database")
     import traceback; traceback.print_exc()
     g.conn = None
+
+  if current_user.is_authenticated:
+      g.user = current_user
+  else:
+      g.user = None
 
 @app.teardown_request
 def teardown_request(exception):
@@ -108,15 +167,6 @@ def index():
 
 
   #
-  # example of a database query
-  #
-  cursor = g.conn.execute("SELECT name FROM test")
-  names = []
-  for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
-  cursor.close()
-
-  #
   # Flask uses Jinja templates, which is an extension to HTML where you can
   # pass data to a template and dynamically generate HTML based on the data
   # (you can think of it as simple PHP)
@@ -142,14 +192,14 @@ def index():
   #     <div>{{n}}</div>
   #     {% endfor %}
   #
-  context = dict(data = names)
 
+  houses = get_all_houses(g.conn)
 
   #
   # render_template looks in the templates/ folder for files.
   # for example, the below file reads template/index.html
   #
-  return render_template("index.html", **context)
+  return render_template("index.html", houses=houses)
 
 #
 # This is an example of a different path.  You can see it at:
@@ -171,12 +221,63 @@ def add():
   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
   return redirect('/')
 
-
+"""
 @app.route('/login')
 def login():
     abort(401)
     this_is_never_executed()
+"""
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        account_id = request.form['account_id']
+        # Replace this with your database query to retrieve user data
+        user = load_user(account_id)
+        
+        if user:
+            login_user(user)
+            flash('Login successful!', 'success')
+            return redirect(request.args.get('next') or '/profile')
+        else:
+            flash('This Account ID does not exist. Please enter valid Account ID or create a new account.', 'error')
+            return redirect('/login')
+
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect('/')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        account_id = request.form['account_id']
+        # Check if the account_id is unique
+        if load_user(account_id) is None:
+            # Create a new user in the database
+            g.conn.execute("INSERT INTO CU_User(account_id, pronouns, move_in_date) VALUES (%s)", (account_id, pronouns, move_in_date))
+
+            # Log in the new user
+            user = User(account_id, pronouns, move_in_date)
+            login_user(user)
+
+            flash('Registration successful!', 'success')
+            return redirect('/profile')
+        else:
+            flash('Account ID already exists. Please choose a different one.', 'error')
+            return redirect('/register')
+
+    return render_template('register.html')
+
+from flask_login import current_user, login_required
+
+@app.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html', user=current_user)
 
 if __name__ == "__main__":
   import click
