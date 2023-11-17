@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort, flash
+from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import secrets
 
@@ -51,25 +51,38 @@ def does_account_id_exist(account_id):
     # If result is not None and the count is greater than 0, account_id exists
     return result is not None and result[0] > 0
 
-def get_all_houses(conn):
+def get_all_houses(conn, sort_by='flat_no', order='asc'):
     """
-    Retrieve all houses from the database.
+    Retrieve all houses from the database and apply sorting.
 
     Parameters:
     - conn: SQLAlchemy database connection.
+    - sort_by: Column to sort by.
+    - order: Sorting order ('asc' or 'desc').
 
     Returns:
     - List of houses.
     """
     try:
-        # Assuming you have a House_Belongs_To_Brokered_By model
-        query = text("SELECT flat_no, bldg_address, bedrooms, bathrooms, price, sq_footage, furnishing_status, availability_status FROM House_Belongs_To_Brokered_By")
+        # Ensure the requested column is valid, default to flat_no if not
+        valid_columns = ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status', 'availability_status']
+        column = sort_by if sort_by in valid_columns else 'flat_no'
+
+        # Determine the order direction
+        valid_orders = ['asc', 'desc']
+        direction = order if order in valid_orders else 'asc'
+
+        query = text(f"SELECT * FROM House_Belongs_To_Brokered_By ORDER BY {column} {direction}")
+        
         result = conn.execute(query)
         houses = [dict(row) for row in result]
+
         return houses
+    
     except Exception as e:
         print(f"Error fetching houses: {str(e)}")
         return []
+
 #
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -193,26 +206,23 @@ def index():
   #     {% endfor %}
   #
 
-  houses = get_all_houses(g.conn)
+  sort_by = request.args.get('sort_by', 'flat_no')
+  order = request.args.get('order', 'asc')
+  
+  houses = get_all_houses(g.conn, sort_by=sort_by, order=order)
 
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
-  return render_template("index.html", houses=houses)
-
-#
-# This is an example of a different path.  You can see it at:
-#
-#     localhost:8111/another
-#
-# Notice that the function name is another() rather than index()
-# The functions for each app.route need to have different names
-#
-@app.route('/another')
-def another():
-  return render_template("another.html")
-
+  unique_bldg_addresses = [row[0] for row in g.conn.execute("SELECT DISTINCT bldg_address FROM House_Belongs_To_Brokered_By")]
+  unique_bedroom_counts = [row[0] for row in g.conn.execute("SELECT DISTINCT bedrooms FROM House_Belongs_To_Brokered_By")]
+  unique_bathroom_counts = [row[0] for row in g.conn.execute("SELECT DISTINCT bathrooms FROM House_Belongs_To_Brokered_By")]
+  unique_furnishing_statuses = [row[0] for row in g.conn.execute("SELECT DISTINCT furnishing_status FROM House_Belongs_To_Brokered_By")]
+  unique_availability_statuses = [row[0] for row in g.conn.execute("SELECT DISTINCT availability_status FROM House_Belongs_To_Brokered_By")]
+  
+  return render_template("index.html", houses=houses,
+                         unique_bldg_addresses=unique_bldg_addresses,
+                         unique_bedroom_counts=unique_bedroom_counts,
+                         unique_bathroom_counts=unique_bathroom_counts,
+                         unique_furnishing_statuses=unique_furnishing_statuses,
+                         unique_availability_statuses=unique_availability_statuses)
 
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
@@ -220,13 +230,6 @@ def add():
   name = request.form['name']
   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
   return redirect('/')
-
-"""
-@app.route('/login')
-def login():
-    abort(401)
-    this_is_never_executed()
-"""
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -272,12 +275,58 @@ def register():
 
     return render_template('register.html')
 
-from flask_login import current_user, login_required
-
 @app.route('/profile')
 @login_required
 def profile():
     return render_template('profile.html', user=current_user)
+
+@app.route('/apply_filters', methods=['POST'])
+def apply_filters():
+    filters = {
+        'bldg_address': request.json.get('bldg_address'),
+        'bedrooms': request.json.get('bedrooms'),
+        'bathrooms': request.json.get('bathrooms'),
+        'furnishing_status': request.json.get('furnishing_status'),
+        'availability_status': request.json.get('availability_status'),
+        'max_price': request.json.get('max_price'),
+        'min_sq_footage': request.json.get('min_sq_footage'),
+    }
+
+    try:
+        # Build the base SQL query
+        query = "SELECT * FROM House_Belongs_To_Brokered_By WHERE 1=1"
+
+        # Add conditions for each filter if they are provided
+        if filters['bldg_address']:
+            query += f" AND bldg_address = '{filters['bldg_address']}'"
+
+        if filters['bedrooms']:
+            query += f" AND bedrooms = '{filters['bedrooms']}'"
+
+        if filters['bathrooms']:
+            query += f" AND bathrooms = '{filters['bathrooms']}'"
+
+        if filters['furnishing_status']:
+            query += f" AND furnishing_status = '{filters['furnishing_status']}'"
+
+        if filters['availability_status']:
+            query += f" AND availability_status = '{filters['availability_status']}'"
+
+        if filters['max_price']:
+            query += f" AND price <= {filters['max_price']}"
+
+        if filters['min_sq_footage']:
+            query += f" AND sq_footage >= {filters['min_sq_footage']}"
+
+        # Execute the query and fetch the filtered houses
+        result = g.conn.execute(query)
+        filtered_houses = [dict(row) for row in result]
+
+        return jsonify({'houses': filtered_houses})
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 
 if __name__ == "__main__":
   import click
