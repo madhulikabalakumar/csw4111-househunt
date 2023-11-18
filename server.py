@@ -44,13 +44,6 @@ def load_user(account_id):
         return User(user_data['account_id'], user_data['pronouns'], user_data['move_in_date'])
     return None
 
-def does_account_id_exist(account_id):
-    # Execute a SELECT query to check if the account_id exists
-    result = g.conn.execute("SELECT COUNT(*) FROM CU_User WHERE account_id = %s", account_id).fetchone()
-
-    # If result is not None and the count is greater than 0, account_id exists
-    return result is not None and result[0] > 0
-
 def get_all_houses(conn, sort_by='flat_no', order='asc'):
     """
     Retrieve all houses from the database and apply sorting.
@@ -70,9 +63,15 @@ def get_all_houses(conn, sort_by='flat_no', order='asc'):
 
         # Determine the order direction
         valid_orders = ['asc', 'desc']
-        direction = order if order in valid_orders else 'asc'
+        order = order if order in valid_orders else 'asc'
 
-        query = text(f"SELECT * FROM House_Belongs_To_Brokered_By ORDER BY {column} {direction}")
+        """# Toggle the order direction if the same column is clicked again
+        if sort_by == column:
+            order = 'desc' if order == 'asc' else 'asc'
+        else:
+            order = order if order in ['asc', 'desc'] else 'asc'
+        """
+        query = text(f"SELECT * FROM House_Belongs_To_Brokered_By ORDER BY {column} {order}")
         
         result = conn.execute(query)
         houses = [dict(row) for row in result]
@@ -178,58 +177,23 @@ def index():
   # DEBUG: this is debugging code to see what request looks like
   print(request.args)
 
-
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #
-  #     # creates a <div> tag for each element in data
-  #     # will print:
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-
   sort_by = request.args.get('sort_by', 'flat_no')
   order = request.args.get('order', 'asc')
   
   houses = get_all_houses(g.conn, sort_by=sort_by, order=order)
 
-  unique_bldg_addresses = [row[0] for row in g.conn.execute("SELECT DISTINCT bldg_address FROM House_Belongs_To_Brokered_By")]
-  unique_bedroom_counts = [row[0] for row in g.conn.execute("SELECT DISTINCT bedrooms FROM House_Belongs_To_Brokered_By")]
-  unique_bathroom_counts = [row[0] for row in g.conn.execute("SELECT DISTINCT bathrooms FROM House_Belongs_To_Brokered_By")]
-  unique_furnishing_statuses = [row[0] for row in g.conn.execute("SELECT DISTINCT furnishing_status FROM House_Belongs_To_Brokered_By")]
-  unique_availability_statuses = [row[0] for row in g.conn.execute("SELECT DISTINCT availability_status FROM House_Belongs_To_Brokered_By")]
+  unique_bldg_addresses = [row[0] for row in g.conn.execute("SELECT DISTINCT bldg_address FROM House_Belongs_To_Brokered_By ORDER BY bldg_address ASC")]
+  unique_bedroom_counts = [row[0] for row in g.conn.execute("SELECT DISTINCT bedrooms FROM House_Belongs_To_Brokered_By ORDER BY bedrooms ASC")]
+  unique_bathroom_counts = [row[0] for row in g.conn.execute("SELECT DISTINCT bathrooms FROM House_Belongs_To_Brokered_By ORDER BY bathrooms ASC")]
+  unique_furnishing_statuses = [row[0] for row in g.conn.execute("SELECT DISTINCT furnishing_status FROM House_Belongs_To_Brokered_By ORDER BY furnishing_status ASC")]
+  unique_availability_statuses = [row[0] for row in g.conn.execute("SELECT DISTINCT availability_status FROM House_Belongs_To_Brokered_By ORDER BY availability_status ASC")]
   
-  return render_template("index.html", houses=houses,
+  return render_template("index.html", houses=houses, sort_by=sort_by, order=order,
                          unique_bldg_addresses=unique_bldg_addresses,
                          unique_bedroom_counts=unique_bedroom_counts,
                          unique_bathroom_counts=unique_bathroom_counts,
                          unique_furnishing_statuses=unique_furnishing_statuses,
                          unique_availability_statuses=unique_availability_statuses)
-
-# Example of adding new data to the database
-@app.route('/add', methods=['POST'])
-def add():
-  name = request.form['name']
-  g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
-  return redirect('/')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -298,28 +262,28 @@ def apply_filters():
 
         # Add conditions for each filter if they are provided
         if filters['bldg_address']:
-            query += f" AND bldg_address = '{filters['bldg_address']}'"
+            query += " AND bldg_address = :bldg_address"
 
         if filters['bedrooms']:
-            query += f" AND bedrooms = '{filters['bedrooms']}'"
+            query += " AND bedrooms = :bedrooms"
 
         if filters['bathrooms']:
-            query += f" AND bathrooms = '{filters['bathrooms']}'"
+            query += " AND bathrooms = :bathrooms"
 
         if filters['furnishing_status']:
-            query += f" AND furnishing_status = '{filters['furnishing_status']}'"
+            query += " AND furnishing_status = :furnishing_status"
 
         if filters['availability_status']:
-            query += f" AND availability_status = '{filters['availability_status']}'"
+            query += " AND availability_status = :availability_status"
 
         if filters['max_price']:
-            query += f" AND price <= {filters['max_price']}"
+            query += " AND price <= :max_price"
 
         if filters['min_sq_footage']:
-            query += f" AND sq_footage >= {filters['min_sq_footage']}"
+            query += " AND sq_footage >= :min_sq_footage"
 
         # Execute the query and fetch the filtered houses
-        result = g.conn.execute(query)
+        result = g.conn.execute(text(query), **filters)
         filtered_houses = [dict(row) for row in result]
 
         return jsonify({'houses': filtered_houses})
