@@ -296,7 +296,17 @@ def register():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', user=current_user)
+    lease = conn.execute("SELECT lease_no, lease_start_date, lease_end_date, flat_no, bldg_address FROM Lease_Info_Rented_By WHERE account_id = %s;", current_user.account_id)
+    leases = [dict(row) for row in lease]
+
+    user_details = g.conn.execute("SELECT C.account_id, C.pronouns, C.move_in_date, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id = %s", current_user.account_id).fetchone()
+    if user_details:
+        student = 1
+    else:
+        user_details = g.conn.execute("SELECT C.account_id, C.pronouns, C.move_in_date, N.family, N.designation FROM CU_User C, Non_Student N WHERE C.account_id = N.account_id AND C.account_id= %s", current_user.account_id).fetchone()
+        student = 0
+
+    return render_template('profile.html', user=user_details, leases=leases, is_student = student);
 
 @app.route('/details')
 def details():
@@ -306,13 +316,13 @@ def details():
   
     bldg_name = bldg.replace('_', ' ')
 
+    print(bldg_name)
     house_details = g.conn.execute("SELECT flat_no, bedrooms, bathrooms, price, lease_duration, sq_footage, furnishing_status, availability_status,pet_friendly, parking_space, safety_rating, contact FROM House_Belongs_To_Brokered_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchone()
     bldg_details = g.conn.execute("SELECT bldg_address, elevator, laundry, super, dist_to_CU, dist_to_public_transport, prox_to_groc_store, entertainment_rating FROM Building WHERE bldg_address = %s", bldg_name).fetchone()
     broker_details = g.conn.execute("SELECT name, company, rating FROM Broker WHERE contact = %s", house_details.contact).fetchone()
     
     userid = conn.execute("SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchall()
     student_details = conn.execute("SELECT C.account_id, C.pronouns, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id IN (SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s)", flat, bldg_name)
-    #nonstudent_details = conn.execute("SELECT C.account_id, C.pronouns, N.family, N.designation FROM CU_User C, Non_Student N WHERE C.account_id = N.account_id AND C.account_id = %s", userid)
     nonstudent_details = conn.execute("SELECT C.account_id, C.pronouns, N.family, N.designation FROM CU_User C, Non_Student N WHERE C.account_id = N.account_id AND C.account_id IN (SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s)", flat, bldg_name)
 
     students = [dict(row) for row in student_details] 
@@ -326,7 +336,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=9113, type=int)
+  @click.argument('PORT', default=9140, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
