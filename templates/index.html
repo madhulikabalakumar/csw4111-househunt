@@ -4,10 +4,6 @@
 
 {% block title %}List of Houses{% endblock %}
 
-{% block head %}
-    <script src="../js/script.js"></script>
-{% endblock %}
-
 {% block content %}
     <div class="container">
         <div class="row">
@@ -15,76 +11,79 @@
                 <div class="filter-panel">
                     <h2>Filter Options</h2>
 
-                    <!-- Building Address Filter -->
-                    <div class="form-group">
-                        <label>Building Address:</label>
-                        {% for address in unique_bldg_addresses %}
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="address_{{ address }}" name="bldg_address" value="{{ address }}">
-                                <label class="form-check-label" for="address_{{ address }}">{{ address }}</label>
-                            </div>
-                        {% endfor %}
-                    </div>
+		            <form action="{{ url_for('index') }}" method="get">
 
-                    <!-- Bedrooms Filter -->
-                    <div class="form-group">
-                        <label>Bedrooms:</label>
-                        {% for bedroom_count in unique_bedroom_counts %}
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="bedrooms_{{ bedroom_count }}" name="bedrooms" value="{{ bedroom_count }}">
-                                <label class="form-check-label" for="bedrooms_{{ bedroom_count }}">{{ bedroom_count }}</label>
-                            </div>
-                        {% endfor %}
-                    </div>
+                    	<!-- Building Address Filter -->
+                    	<div class="form-group">
+                            <label>Building Address:</label>
+                            {% for address in unique_bldg_addresses %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="address_{{ address }}" name="bldg_address" value="{{ address }}" {% if address in request.args.getlist('bldg_address') %}checked{% endif %}>
+                                    <label class="form-check-label" for="address_{{ address }}">{{ address }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
 
-                    <!-- Bathrooms Filter -->
-                    <div class="form-group">
-                        <label>Bathrooms:</label>
-                        {% for bathroom_count in unique_bathroom_counts %}
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="bathrooms_{{ bathroom_count }}" name="bathrooms" value="{{ bathroom_count }}">
-                                <label class="form-check-label" for="bathrooms_{{ bathroom_count }}">{{ bathroom_count }}</label>
-                            </div>
-                        {% endfor %}
-                    </div>
+                        <!-- Bedrooms Filter -->
+                        <div class="form-group">
+                            <label>Bedrooms:</label>
+                            {% for bedroom_count in unique_bedroom_counts %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="bedrooms_{{ bedroom_count }}" name="bedrooms" value="{{ bedroom_count }}" {% if bedroom_count in request.args.getlist('bedrooms') %}checked{% endif %}>
+                                    <label class="form-check-label" for="bedrooms_{{ bedroom_count }}">{{ bedroom_count }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
 
-                    <!-- Furnishing Status Filter -->
-                    <div class="form-group">
-                        <label>Furnishing Status:</label>
-                        {% for status in unique_furnishing_statuses %}
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="furnishing_{{ status }}" name="furnishing_status" value="{{ status }}">
-                                <label class="form-check-label" for="furnishing_{{ status }}">{{ status }}</label>
-                            </div>
-                        {% endfor %}
-                    </div>
+                        <!-- Bathrooms Filter -->
+                        <div class="form-group">
+                            <label>Bathrooms:</label>
+                            {% for bathroom_count in unique_bathroom_counts %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="bathrooms_{{ bathroom_count }}" name="bathrooms" value="{{ bathroom_count }}" {% if bathroom_count in request.args.getlist('bathrooms') %}checked{% endif %}>
+                                    <label class="form-check-label" for="bathrooms_{{ bathroom_count }}">{{ bathroom_count }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
 
-                    <!-- Availability Status Filter -->
-                    <div class="form-group">
-                        <label>Availability Status:</label>
-                        {% for status in unique_availability_statuses %}
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="availability_{{ status }}" name="availability_status" value="{{ status }}">
-                                <label class="form-check-label" for="availability_{{ status }}">{{ status }}</label>
-                            </div>
-                        {% endfor %}
-                    </div>
+                        <!-- Furnishing Status Filter -->
+                        <div class="form-group">
+                            <label>Furnishing Status:</label>
+                            {% for status in unique_furnishing_statuses %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="furnishing_{{ status }}" name="furnishing_status" value="{{ status }}" {% if status in request.args.getlist('furnishing_status') %}checked{% endif %}>
+                                    <label class="form-check-label" for="furnishing_{{ status }}">{{ status }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
 
-                    <!-- Price Filter -->
-                    <div class="form-group">
-                        <label for="max_price">Max Price:</label>
-                        <input type="text" class="form-control" id="max_price" name="max_price">
-                    </div>
+                        <!-- Availability Status Filter -->
+                        <div class="form-group">
+                            <label>Availability Status:</label>
+                            {% for status in unique_availability_statuses %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="availability_{{ status }}" name="availability_status" value="{{ status }}" {% if status in request.args.getlist('availability_status') %}checked{% endif %}> 
+                                    <label class="form-check-label" for="availability_{{ status }}">{{ status }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
 
-                    <!-- Sq Footage Filter -->
-                    <div class="form-group">
-                        <label for="min_sq_footage">Min Sq Footage:</label>
-                        <input type="text" class="form-control" id="min_sq_footage" name="min_sq_footage">
-                    </div>
+                        <!-- Price Filter -->
+                        <div class="form-group">
+                            <label for="max_price">Max Price:</label>
+                            <input type="text" class="form-control" id="max_price" name="max_price" value="{{ request.args.get('max_price') }}">
+                        </div>
 
-                    <!-- Apply Filter Button -->
-                    <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
-                </div>
+                        <!-- Sq Footage Filter -->
+                        <div class="form-group">
+                            <label for="min_sq_footage">Min Sq Footage:</label>
+                            <input type="text" class="form-control" id="min_sq_footage" name="min_sq_footage" value="{{ request.args.get('min_sq_footage') }}">
+                        </div>
+
+                        <!-- Apply Filter Button -->
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+		            </form>
+		        </div>
             </div>
 
             <div class="col-md-9">
@@ -94,7 +93,7 @@
                     <tr>
                         {% for column in ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status', 'availability_status'] %}
                             <th>
-                                <a href="{{ url_for('index', sort_by=column, order='asc') }}">
+                                <a href="{{ url_for('index', sort_by=column, order='asc' if sort_by != column or order == 'desc' else 'desc') }}">
                                     {{ column.replace('_', ' ').capitalize() }}
                                     {% if sort_by == column %}
                                         {% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}
