@@ -41,7 +41,9 @@
 
         <div class="auth-links">
             {% if current_user.is_authenticated %}
-                <p>Welcome, {{ current_user.account_id }}! <a href="/logout">Logout</a></p>
+                <p>Welcome, {{ current_user.account_id }}!</p>
+                <a class="auth-link" href="/profile">My Profile</a>
+                <a href="/logout">Logout</a>
             {% else %}
                 <a class="auth-link" href="/login">Login</a>
                 <a class="auth-link" href="/register">Register</a>

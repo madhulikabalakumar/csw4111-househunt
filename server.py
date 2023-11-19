@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify
+from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify, url_for
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import secrets
 
@@ -67,10 +67,10 @@ def get_all_houses(conn, sort_by='flat_no', order='asc'):
 
         """# Toggle the order direction if the same column is clicked again
         if sort_by == column:
-            order = 'desc' if order == 'asc' else 'asc'
+            order = 'asc' if order == 'asc' else 'asc'
         else:
-            order = order if order in ['asc', 'desc'] else 'asc'
-        """
+            order = order if order in ['asc', 'desc'] else 'asc'"""
+        
         query = text(f"SELECT * FROM House_Belongs_To_Brokered_By ORDER BY {column} {order}")
         
         result = conn.execute(query)
@@ -81,6 +81,46 @@ def get_all_houses(conn, sort_by='flat_no', order='asc'):
     except Exception as e:
         print(f"Error fetching houses: {str(e)}")
         return []
+
+def filter_houses(houses, filter_params):
+    filtered_houses = houses
+
+    # Building Address Filter
+    addresses_to_filter = filter_params.get('bldg_address', [])
+    if addresses_to_filter:
+        filtered_houses = [house for house in filtered_houses if house['bldg_address'] in addresses_to_filter]
+
+    # Bedrooms Filter
+    bedrooms_to_filter = filter_params.get('bedrooms', [])
+    if bedrooms_to_filter:
+        filtered_houses = [house for house in filtered_houses if str(house['bedrooms']) in bedrooms_to_filter]
+
+    # Bathrooms Filter
+    bathrooms_to_filter = filter_params.get('bathrooms', [])
+    if bathrooms_to_filter:
+        filtered_houses = [house for house in filtered_houses if str(house['bathrooms']) in bathrooms_to_filter]
+
+    # Furnishing Status Filter
+    furnishing_status_to_filter = filter_params.get('furnishing_status', [])
+    if furnishing_status_to_filter:
+        filtered_houses = [house for house in filtered_houses if house['furnishing_status'] in furnishing_status_to_filter]
+
+    # Availability Status Filter
+    availability_status_to_filter = filter_params.get('availability_status', [])
+    if availability_status_to_filter:
+        filtered_houses = [house for house in filtered_houses if house['availability_status'] in availability_status_to_filter]
+
+    # Price Filter
+    max_price = filter_params.get('max_price')
+    if max_price:
+        try:
+            max_price = float(max_price)
+            filtered_houses = [house for house in filtered_houses if house['price'] <= max_price]
+        except ValueError:
+            pass  # Handle invalid input gracefully
+
+    return filtered_houses
+
 
 #
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
@@ -105,12 +145,6 @@ engine = create_engine(DATABASEURI)
 # Note that this will probably not work if you already have a table named 'test' in your database, containing meaningful data. This is only an example showing you how to run queries in your database using SQLAlchemy.
 #
 conn = engine.connect()
-
-conn.execute("""CREATE TABLE IF NOT EXISTS test (
-  id serial,
-  name text
-);""")
-conn.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 
 
 @app.before_request
@@ -163,37 +197,57 @@ def teardown_request(exception):
 #
 @app.route('/')
 def index():
-  """
-  request is a special object that Flask provides to access web request information:
+    """
+    request is a special object that Flask provides to access web request information:
 
-  request.method:   "GET" or "POST"
-  request.form:     if the browser submitted a form, this contains the data in the form
-  request.args:     dictionary of URL arguments, e.g., {a:1, b:2} for http://localhost?a=1&b=2
+    request.method:   "GET" or "POST"
+    request.form:     if the browser submitted a form, this contains the data in the form
+    request.args:     dictionary of URL arguments, e.g., {a:1, b:2} for http://localhost?a=1&b=2
 
-  See its API: https://flask.palletsprojects.com/en/2.0.x/api/?highlight=incoming%20request%20data
+    See its API: https://flask.palletsprojects.com/en/2.0.x/api/?highlight=incoming%20request%20data
 
-  """
+    """
 
-  # DEBUG: this is debugging code to see what request looks like
-  print(request.args)
+    # DEBUG: this is debugging code to see what request looks like
+    print(request.args)
 
-  sort_by = request.args.get('sort_by', 'flat_no')
-  order = request.args.get('order', 'asc')
-  
-  houses = get_all_houses(g.conn, sort_by=sort_by, order=order)
+    sort_by = request.args.get('sort_by', 'flat_no')
+    order = request.args.get('order', 'asc')
 
-  unique_bldg_addresses = [row[0] for row in g.conn.execute("SELECT DISTINCT bldg_address FROM House_Belongs_To_Brokered_By ORDER BY bldg_address ASC")]
-  unique_bedroom_counts = [row[0] for row in g.conn.execute("SELECT DISTINCT bedrooms FROM House_Belongs_To_Brokered_By ORDER BY bedrooms ASC")]
-  unique_bathroom_counts = [row[0] for row in g.conn.execute("SELECT DISTINCT bathrooms FROM House_Belongs_To_Brokered_By ORDER BY bathrooms ASC")]
-  unique_furnishing_statuses = [row[0] for row in g.conn.execute("SELECT DISTINCT furnishing_status FROM House_Belongs_To_Brokered_By ORDER BY furnishing_status ASC")]
-  unique_availability_statuses = [row[0] for row in g.conn.execute("SELECT DISTINCT availability_status FROM House_Belongs_To_Brokered_By ORDER BY availability_status ASC")]
-  
-  return render_template("index.html", houses=houses, sort_by=sort_by, order=order,
-                         unique_bldg_addresses=unique_bldg_addresses,
-                         unique_bedroom_counts=unique_bedroom_counts,
-                         unique_bathroom_counts=unique_bathroom_counts,
-                         unique_furnishing_statuses=unique_furnishing_statuses,
-                         unique_availability_statuses=unique_availability_statuses)
+    houses = get_all_houses(g.conn, sort_by, order)
+
+    # Handle filtering logic
+    filter_params = {
+        'bldg_address': request.args.getlist('bldg_address'),
+        'bedrooms': request.args.getlist('bedrooms'),
+        'bathrooms': request.args.getlist('bathrooms'),
+        'furnishing_status': request.args.getlist('furnishing_status'),
+        'availability_status': request.args.getlist('availability_status'),
+        'max_price': request.args.get('max_price'),
+        'min_sq_footage': request.args.get('min_sq_footage'),
+    }
+    houses = filter_houses(houses, filter_params)
+
+    # Get unique filter values
+    unique_bldg_addresses = g.conn.execute("SELECT DISTINCT bldg_address FROM House_Belongs_To_Brokered_By ORDER BY bldg_address ASC").fetchall()
+    unique_bldg_addresses = [row[0] for row in unique_bldg_addresses]
+    unique_bedroom_counts = g.conn.execute("SELECT DISTINCT bedrooms FROM House_Belongs_To_Brokered_By ORDER BY bedrooms ASC").fetchall()
+    unique_bedroom_counts = [row[0] for row in unique_bedroom_counts]
+    unique_bathroom_counts = g.conn.execute("SELECT DISTINCT bathrooms FROM House_Belongs_To_Brokered_By ORDER BY bathrooms ASC").fetchall()
+    unique_bathroom_counts = [row[0] for row in unique_bathroom_counts]
+    unique_furnishing_statuses = g.conn.execute("SELECT DISTINCT furnishing_status FROM House_Belongs_To_Brokered_By ORDER BY furnishing_status ASC").fetchall()
+    unique_furnishing_statuses = [row[0] for row in unique_furnishing_statuses]
+    unique_availability_statuses = g.conn.execute("SELECT DISTINCT availability_status FROM House_Belongs_To_Brokered_By ORDER BY availability_status ASC").fetchall()
+    unique_availability_statuses = [row[0] for row in unique_availability_statuses]
+
+    return render_template('index.html', houses=houses, sort_by=sort_by, order=order,
+                           unique_bldg_addresses=unique_bldg_addresses,
+                           unique_bedroom_counts=unique_bedroom_counts,
+                           unique_bathroom_counts=unique_bathroom_counts,
+                           unique_furnishing_statuses=unique_furnishing_statuses,
+                           unique_availability_statuses=unique_availability_statuses,
+                           filter_params=filter_params)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -205,7 +259,7 @@ def login():
         if user:
             login_user(user)
             flash('Login successful!', 'success')
-            return redirect(request.args.get('next') or '/profile')
+            return redirect(request.args.get('next') or url_for('index'))
         else:
             flash('This Account ID does not exist. Please enter valid Account ID or create a new account.', 'error')
             return redirect('/login')
@@ -244,53 +298,6 @@ def register():
 def profile():
     return render_template('profile.html', user=current_user)
 
-@app.route('/apply_filters', methods=['POST'])
-def apply_filters():
-    filters = {
-        'bldg_address': request.json.get('bldg_address'),
-        'bedrooms': request.json.get('bedrooms'),
-        'bathrooms': request.json.get('bathrooms'),
-        'furnishing_status': request.json.get('furnishing_status'),
-        'availability_status': request.json.get('availability_status'),
-        'max_price': request.json.get('max_price'),
-        'min_sq_footage': request.json.get('min_sq_footage'),
-    }
-
-    try:
-        # Build the base SQL query
-        query = "SELECT * FROM House_Belongs_To_Brokered_By WHERE 1=1"
-
-        # Add conditions for each filter if they are provided
-        if filters['bldg_address']:
-            query += " AND bldg_address = :bldg_address"
-
-        if filters['bedrooms']:
-            query += " AND bedrooms = :bedrooms"
-
-        if filters['bathrooms']:
-            query += " AND bathrooms = :bathrooms"
-
-        if filters['furnishing_status']:
-            query += " AND furnishing_status = :furnishing_status"
-
-        if filters['availability_status']:
-            query += " AND availability_status = :availability_status"
-
-        if filters['max_price']:
-            query += " AND price <= :max_price"
-
-        if filters['min_sq_footage']:
-            query += " AND sq_footage >= :min_sq_footage"
-
-        # Execute the query and fetch the filtered houses
-        result = g.conn.execute(text(query), **filters)
-        filtered_houses = [dict(row) for row in result]
-
-        return jsonify({'houses': filtered_houses})
-
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
 
 if __name__ == "__main__":
   import click
@@ -299,7 +306,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=8111, type=int)
+  @click.argument('PORT', default=4111, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
