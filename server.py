@@ -219,7 +219,7 @@ def index():
     # Handle filtering logic
     filter_params = {
         'bldg_address': request.args.getlist('bldg_address'),
-        'bedrooms': request.args.getlist('bedrooms'),
+        'bedrooms': request.args.getlist('bedrooms'), 
         'bathrooms': request.args.getlist('bathrooms'),
         'furnishing_status': request.args.getlist('furnishing_status'),
         'availability_status': request.args.getlist('availability_status'),
