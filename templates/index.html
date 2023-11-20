@@ -64,7 +64,6 @@
                                 <div class="form-check">
                                     <input type="checkbox" class="form-check-input" id="availability_{{ status }}" name="availability_status" value="{{ status }}" {% if status in request.args.getlist('availability_status') %}checked{% endif %}> 
                                     <label class="form-check-label" for="availability_{{ status }}">{{ status }}</label>
-                                    {{ unique_availability_statuses }} - {{ request.args.getlist('availability_status') }}
                                 </div>
                             {% endfor %}
                         </div>
@@ -98,7 +97,6 @@
                     <tr>
                         {% for column in ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status', 'availability_status'] %}
                             <th>
-                                <a href="{{ url_for('index', sort_by=column, order='asc' if sort_by != column or order == 'desc' else 'desc') }}">
                                 <a href="{{ url_for('index', sort_by=column, order='asc' if sort_by != column or order == 'desc' else 'desc', **filter_params) }}">
                                     {{ column.replace('_', ' ').capitalize() }}
                                     {% if sort_by == column %}
