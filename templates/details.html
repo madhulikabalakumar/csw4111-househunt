@@ -1,55 +1,61 @@
 <!-- details.html -->
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 {% extends 'base.html' %}
 {% block title %}House {% endblock %}
 {% block content %}
 
 <div class="col-md-9">
-    <h1 class="page-heading">House: #{{house.flat_no}} {{bldg.bldg_address}}</h1>
-
     <div class="w3-container">
-       
+        <div class="w3-row">
+            <div class="w3-col s6">
+                <h1 class="page-heading">House: #{{house.flat_no}} {{bldg.bldg_address}}</h1>
+            </div>
+            <div class="w3-col s6 text-right">
+                <a href="{{ url_for('rent_form', flat_no=house.flat_no, bldg_address=bldg.bldg_address.replace(' ', '_')) }}" class="btn btn-primary">Rent This House</a>
+            </div>
+        </div>
+
         <div class="w3-row w3-large">
-          <div class="w3-col s6">
-            <p><i class="fa fa-fw fa-male"></i> Square Footage:  {{house.sq_footage}} ft<sup>2</sup></p>
-            <p><i class="fa fa-fw fa-bath"></i> Bathrooms: {{house.bathrooms}}</p>
-            <p><i class="fa fa-fw fa-bed"></i> Bedrooms: {{house.bedrooms}}</p>
-            <p><i class="fa fa-fw fa-usd"></i> Price: USD {{house.price}}</p>
-          </div>
-          <div class="w3-col s6">
-            <p><i class="fa fa-fw fa-calendar"></i> Lease Duration: {{house.lease_duration}} months</p>
-            <p><i class="fa fa-fw fa-bed"></i> Furnishing Status: {{house.furnishing_status}}</p>
-            <p><i class="fa fa-fw fa-paw"></i> Pet friendly: {{house.pet_friendly}}</p>
-            <p><i class="fa fa-fw fa-car"></i> Parking Space: {{house.parking_space}}</p>
-          </div>
+            <div class="w3-col s6">
+                <p><i class="fa fa-fw fa-male"></i> Square Footage:  {{house.sq_footage}} ft<sup>2</sup></p>
+                <p><i class="fa fa-fw fa-bath"></i> Bathrooms: {{house.bathrooms}}</p>
+                <p><i class="fa fa-fw fa-bed"></i> Bedrooms: {{house.bedrooms}}</p>
+                <p><i class="fa fa-fw fa-usd"></i> Price: USD {{house.price}}</p>
+            </div>
+            <div class="w3-col s6">
+                <p><i class="fa fa-fw fa-calendar"></i> Lease Duration: {{house.lease_duration}} months</p>
+                <p><i class="fa fa-fw fa-bed"></i> Furnishing Status: {{house.furnishing_status}}</p>
+                <p><i class="fa fa-fw fa-paw"></i> Pet friendly: {{house.pet_friendly}}</p>
+                <p><i class="fa fa-fw fa-car"></i> Parking Space: {{house.parking_space}}</p>
+            </div>
         </div>
         <hr>
-   
+
         <h4><strong>Amenities</strong></h4>
         <div class="w3-row w3-large">
-          <div class="w3-col s6">
-            <p><i class="fa fa-fw fa-wheelchair"></i> Elevator: {{bldg.elevator}}</p>
-            <p><i class="fa fa-fw fa-shower"></i>Laundry: {{bldg.laundry}}</p>
-            <p><i class="fa fa-fw fa-male"></i>Super: {{bldg.super}}</p>
-          </div>
-          <div class="w3-col s6">
-            <p><i class="fa fa-fw fa-university"></i>Distance to Columbia Univeristy: {{bldg.dist_to_CU}} miles</p>
-            <p><i class="fa fa-fw fa-subway"></i> Distance to Public Transport: {{bldg.dist_to_public_transport}} miles</p>
-            <p><i class="fa fa-fw fa-shopping-basket"></i> Distance to Closest Grocery Store: {{bldg.prox_to_groc_store}} miles</p>
-          </div>
+            <div class="w3-col s6">
+                <p><i class="fa fa-fw fa-wheelchair"></i> Elevator: {{bldg.elevator}}</p>
+                <p><i class="fa fa-fw fa-shower"></i>Laundry: {{bldg.laundry}}</p>
+                <p><i class="fa fa-fw fa-male"></i>Super: {{bldg.super}}</p>
+            </div>
+            <div class="w3-col s6">
+                <p><i class="fa fa-fw fa-university"></i>Distance to Columbia Univeristy: {{bldg.dist_to_CU}} miles</p>
+                <p><i class="fa fa-fw fa-subway"></i> Distance to Public Transport: {{bldg.dist_to_public_transport}} miles</p>
+                <p><i class="fa fa-fw fa-shopping-basket"></i> Distance to Closest Grocery Store: {{bldg.prox_to_groc_store}} miles</p>
+            </div>
         </div>
 
         <hr>
         <h4><strong>User Ratings</strong></h4>
         <div class="w3-row w3-large">
             <div class="w3-col s6">
-            <p><i class="fa fa-fw fa-cutlery"></i>Entertainment Rating: {{bldg.entertainment_rating}}</p>
+                <p><i class="fa fa-fw fa-cutlery"></i>Entertainment Rating: {{bldg.entertainment_rating}}</p>
             </div>
             <div>
-            <p><i class="fa fa-fw fa-exclamation-triangle"></i>Safety Rating: {{house.safety_rating}}</p>
+                <p><i class="fa fa-fw fa-exclamation-triangle"></i>Safety Rating: {{house.safety_rating}}</p>
             </div>
         </div>
 
@@ -59,9 +65,9 @@
         <br>
         <div class="w3-row w3-large">
             <div class="w3-col s6">
-            <p><i class="fa fa-fw fa-user"></i>Name: {{broker.name}}</p>
-            <p><i class="fa fa-fw fa-briefcase"></i>Company: {{broker.company}}</p>
-            <p><i class="fa fa-fw fa-star"></i>Rating: {{broker.rating}}</p>
+                <p><i class="fa fa-fw fa-user"></i>Name: {{broker.name}}</p>
+                <p><i class="fa fa-fw fa-briefcase"></i>Company: {{broker.company}}</p>
+                <p><i class="fa fa-fw fa-star"></i>Rating: {{broker.rating}}</p>
             </div>
         </div>      
         
@@ -69,37 +75,36 @@
         
         <h4><strong>Previous Renters</strong></h4>
 
-          <div class="w3-row-padding w3-padding-16">
-          {% for s in student %}
-            <div class="w3-third w3-margin-bottom">
-              <div class="w3-container w3-light-grey">
-                <h3>Columbia Student</h3>
-                <h6 class="w3-opacity">{{s.pronouns}}</h6>
-                <p><i class="fa fa-user-circle"></i> Account Id: {{s.account_id}}</p>
-                <p><i class="fa fa-graduation-cap"></i> Degree Type: {{s.citizenship}}</p>
-                <p><i class="fa fa-flag"></i> Citizenship: {{s.citizenship}}</p>
-                <!--<p class="w3-large"><i class="fa fa-bath"></i> <i class="fa fa-phone"></i> <i class="fa fa-wifi"></i></p>-->
-                <!--<button class="w3-button w3-block w3-black w3-margin-bottom">Choose Room</button>-->
-              </div>
-            </div>
-          {% endfor %}
-          </div>
-
-        
         <div class="w3-row-padding w3-padding-16">
-          {% for st in staff %}
-          <div class="w3-third w3-margin-bottom">
-            <div class="w3-container w3-light-grey">
-              <h3>Columbia Staff</h3>
-              <h6 class="w3-opacity">{{st.pronouns}}</h6>
-              <p><i class="fa fa-user-circle"></i> Account Id: {{st.account_id}}</p>
-              <p><i class="fa fa-users"></i> Family: {{st.family}}</p>
-              <p><i class="fa fa-briefcase"></i> Designation: {{st.designation}}</p>
-            </div>
-          </div>
-          {% endfor %}
+            {% for s in student %}
+                <div class="w3-third w3-margin-bottom">
+                    <div class="w3-container w3-light-grey">
+                        <h3>Columbia Student</h3>
+                        <h6 class="w3-opacity">{{s.pronouns}}</h6>
+                        <p><i class="fa fa-user-circle"></i> Account Id: {{s.account_id}}</p>
+                        <p><i class="fa fa-graduation-cap"></i> Degree Type: {{s.citizenship}}</p>
+                        <p><i class="fa fa-flag"></i> Citizenship: {{s.citizenship}}</p>
+                        <!--<p class="w3-large"><i class="fa fa-bath"></i> <i class="fa fa-phone"></i> <i class="fa fa-wifi"></i></p>-->
+                        <!--<button class="w3-button w3-block w3-black w3-margin-bottom">Choose Room</button>-->
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-     
-</div>
-{% endblock %}
 
+        <div class="w3-row-padding w3-padding-16">
+            {% for st in staff %}
+                <div class="w3-third w3-margin-bottom">
+                    <div class="w3-container w3-light-grey">
+                        <h3>Columbia Staff</h3>
+                        <h6 class="w3-opacity">{{st.pronouns}}</h6>
+                        <p><i class="fa fa-user-circle"></i> Account Id: {{st.account_id}}</p>
+                        <p><i class="fa fa-users"></i> Family: {{st.family}}</p>
+                        <p><i class="fa fa-briefcase"></i> Designation: {{st.designation}}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -15,6 +15,8 @@ from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify, url_for
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import secrets
+from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 class User(UserMixin):
     def __init__(self, account_id, pronouns, move_in_date):
@@ -328,6 +330,52 @@ def details():
     students = [dict(row) for row in student_details] 
     nonstudents = [dict(row) for row in nonstudent_details] 
     return render_template("details.html", bldg=bldg_details, house=house_details, broker=broker_details, student=students, staff=nonstudents)
+
+
+@app.route('/rent_form/<int:flat_no>/<string:bldg_address>', methods=['GET', 'POST'])
+@login_required
+def rent_form(flat_no, bldg_address):
+    if request.method == 'POST':
+
+        max_lease_no = g.conn.execute("SELECT MAX(lease_no) FROM Lease_Info_Rented_By").scalar()
+        g.conn.execute(f"SELECT setval('lease_info_rented_by_lease_no_seq', {max_lease_no + 1})")
+
+        lease_start_date = request.form.get('lease_start_date')
+        lease_end_date = request.form.get('lease_end_date')
+        lease_start_date = datetime.strptime(lease_start_date, '%Y-%m-%d').date()
+        lease_end_date = datetime.strptime(lease_end_date, '%Y-%m-%d').date()
+        account_id = current_user.account_id
+
+        try:
+            existing_lease = g.conn.execute(
+                "SELECT MAX(lease_end_date) FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s",
+                (flat_no, bldg_address.replace('_', ' '))
+            ).fetchone()
+
+            print(existing_lease, lease_start_date)
+            if existing_lease and existing_lease[0] and lease_start_date <= existing_lease[0]:
+                flash("Error: Lease start date overlaps with an existing lease for this house.")
+            else:
+                g.conn.execute(
+                    "INSERT INTO Lease_Info_Rented_By (lease_start_date, account_id, flat_no, bldg_address) VALUES (%s, %s, %s, %s)",
+                    (lease_start_date, account_id, flat_no, bldg_address.replace('_', ' '))
+                )
+                flash("Lease created successfully!")
+                return redirect(url_for('index'))
+
+        except IntegrityError as e:
+            # Handle integrity constraint violation (e.g., duplicate entry)
+            flash("Error: Integrity constraint violation. Please check your input.", "error")
+            # You might want to log the exception for debugging purposes
+            print(f"IntegrityError: {e}")
+
+        except Exception as e:
+            # Handle other exceptions
+            flash(f"An error occurred: {str(e)}", "error")
+            # You might want to log the exception for debugging purposes
+            print(f"Exception: {e}")
+
+    return render_template('rent_form.html', flat_no=flat_no, bldg_address=bldg_address)
 
 if __name__ == "__main__":
   import click
