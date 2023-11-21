@@ -15,7 +15,7 @@ from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify, url_for
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import secrets
-from datetime import datetime
+from datetime import datetime, date
 from sqlalchemy.exc import IntegrityError
 
 class User(UserMixin):
@@ -277,23 +277,49 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        account_id = request.form['[p]]']
-        # Check if the account_id is unique
+        account_id = request.form['account_id']
+        pronouns = request.form['pronouns']
+        move_in_date = request.form['move_in_date']
+        user_type = request.form['user_type']
+
+        if not all([account_id, pronouns, move_in_date]):
+            flash('Please fill in all fields.', 'error')
+            return redirect('/register')
+
         if load_user(account_id) is None:
-            # Create a new user in the database
-            g.conn.execute("INSERT INTO CU_User(account_id, pronouns, move_in_date) VALUES (%s)", (account_id, pronouns, move_in_date))
+            try:
+                g.conn.execute("INSERT INTO CU_User(account_id, pronouns, move_in_date) VALUES (%s, %s, %s)",
+                               (account_id, pronouns, move_in_date))
 
-            # Log in the new user
-            user = User(account_id, pronouns, move_in_date)
-            login_user(user)
+                if user_type == 'student':
+                    if not all([request.form['citizenship'], request.form['degree_type']]):
+                        flash('Please fill in all fields.', 'error')
+                        return redirect('/register')
 
-            flash('Registration successful!', 'success')
-            return redirect('/profile')
+                    g.conn.execute("INSERT INTO Student(account_id, citizenship, degree_type) VALUES (%s, %s, %s)",
+                                   (account_id, request.form['citizenship'], request.form['degree_type']))
+                elif user_type == 'non_student':
+                    if not all([request.form['family'], request.form['designation']]):
+                        flash('Please fill in all fields.', 'error')
+                        return redirect('/register')
+
+                    g.conn.execute("INSERT INTO Non_Student(account_id, family, designation) VALUES (%s, %s, %s)",
+                                   (account_id, request.form['family'], request.form['designation']))
+
+                user = User(account_id, pronouns, move_in_date)
+                login_user(user)
+
+                flash('Registration successful!', 'success')
+                return redirect('/profile')
+            except Exception as e:
+                flash(f'Registration failed. Please enter valid details.', 'error')
+                return redirect('/register')
         else:
             flash('Account ID already exists. Please choose a different one.', 'error')
             return redirect('/register')
 
-    return render_template('register.html')
+    current_date = date.today().isoformat()
+    return render_template('register.html', current_date=current_date)
 
 @app.route('/profile')
 @login_required
@@ -352,7 +378,6 @@ def rent_form(flat_no, bldg_address):
                 (flat_no, bldg_address.replace('_', ' '))
             ).fetchone()
 
-            print(existing_lease, lease_start_date)
             if existing_lease and existing_lease[0] and lease_start_date <= existing_lease[0]:
                 flash("Error: Lease start date overlaps with an existing lease for this house.")
             else:
@@ -364,18 +389,15 @@ def rent_form(flat_no, bldg_address):
                 return redirect(url_for('index'))
 
         except IntegrityError as e:
-            # Handle integrity constraint violation (e.g., duplicate entry)
             flash("Error: Integrity constraint violation. Please check your input.", "error")
-            # You might want to log the exception for debugging purposes
             print(f"IntegrityError: {e}")
 
         except Exception as e:
-            # Handle other exceptions
             flash(f"An error occurred: {str(e)}", "error")
-            # You might want to log the exception for debugging purposes
             print(f"Exception: {e}")
 
-    return render_template('rent_form.html', flat_no=flat_no, bldg_address=bldg_address)
+    current_date = date.today().isoformat()
+    return render_template('rent_form.html', flat_no=flat_no, bldg_address=bldg_address, current_date=current_date)
 
 if __name__ == "__main__":
   import click
