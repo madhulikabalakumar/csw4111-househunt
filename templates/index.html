@@ -57,17 +57,6 @@
                             {% endfor %}
                         </div>
 
-                        <!-- Availability Status Filter -->
-                        <div class="form-group">
-                            <label>Availability Status:</label>
-                            {% for status in unique_availability_statuses %}
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="availability_{{ status }}" name="availability_status" value="{{ status }}" {% if status in request.args.getlist('availability_status') %}checked{% endif %}> 
-                                    <label class="form-check-label" for="availability_{{ status }}">{{ status }}</label>
-                                </div>
-                            {% endfor %}
-                        </div>
-
                         <!-- Price Filter -->
                         <div class="form-group">
                             <label for="max_price">Max Price:</label>
@@ -78,6 +67,21 @@
                         <div class="form-group">
                             <label for="min_sq_footage">Min Sq Footage:</label>
                             <input type="text" class="form-control" id="min_sq_footage" name="min_sq_footage" value="{{ request.args.get('min_sq_footage') }}">
+                        </div>
+
+                        <!-- Filter by Move-In Date -->
+                        <div class="form-group">
+                            <label>Filter by Move-In Date:</label>
+                            {% if current_user.is_authenticated %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="filter_move_in_date" name="filter_move_in_date" {% if request.args.get('filter_move_in_date') %}checked{% endif %}>
+                                    <label class="form-check-label" for="filter_move_in_date">Move-In Date</label>
+                                </div>
+                            {% else %}
+                                <div>
+                                    <em>Log in to use this filter</em>
+                                </div>
+                            {% endif %}
                         </div>
 
                         <!-- New sorting options -->
@@ -95,14 +99,18 @@
 
                 <table class="table table-bordered">
                     <tr>
-                        {% for column in ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status', 'availability_status'] %}
+                        {% for column in ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status', 'availability_date'] %}
                             <th>
-                                <a href="{{ url_for('index', sort_by=column, order='asc' if sort_by != column or order == 'desc' else 'desc', **filter_params) }}">
+                                {% if column == 'availability_date' %}
                                     {{ column.replace('_', ' ').capitalize() }}
-                                    {% if sort_by == column %}
-                                        {% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}
-                                    {% endif %}
-                                </a>
+                                {% else %}
+                                    <a href="{{ url_for('index', sort_by=column, order='asc' if sort_by != column or order == 'desc' else 'desc', **filter_params) }}">
+                                        {{ column.replace('_', ' ').capitalize() }}
+                                        {% if sort_by == column %}
+                                            {% if order == 'asc' %}&uarr;{% else %}&darr;{% endif %}
+                                        {% endif %}
+                                    </a>
+                                {% endif %}
                             </th>
                         {% endfor %}
                     </tr>
@@ -116,7 +124,7 @@
                             <td>{{ house.price }}</td>
                             <td>{{ house.sq_footage }}</td>
                             <td>{{ house.furnishing_status }}</td>
-                            <td>{{ house.availability_status }}</td>
+                            <td>{{ house.availability_date }}</td>
                             <td><button type="btn btn-primary" onclick="window.location.href='{{ url_for('details', flat=house.flat_no, bldg=house.bldg_address.replace(' ', '_') ) }}';">Display Details</button></td>
                         </tr>
                     {% endfor %}
@@ -125,4 +133,3 @@
         </div>
     </div>
 {% endblock %}
-
