@@ -36,31 +36,54 @@
            <form action="{{ url_for('editprofile', is_student=is_student) }}" method="post">
            <div class="form-group">
             <label for="pronouns"><i class="fa fa-mars"></i> Pronouns:</label>
-            <input type="text" class="form-control" id="pronouns" name="pronouns" value="{{ request.args.get('user.pronouns') }}">
+            <input type="text" class="form-control" id="pronouns" name="pronouns" value="{{user.pronouns }}">
            </div>
 
            <div class="form-group">
             <label for="move_in_date"><i class="fa fa-fw fa-calendar"></i> Move in date:</label>
-            <input type="date" class="form-control" id="move_in_date" name="move_in_date" value="{{ request.args.get('user.move_in_date') }}">
+            <input type="date" class="form-control" id="move_in_date" name="move_in_date" value="{{user.move_in_date}}">
            </div>
 
           {% if is_student == 1:%}
               <div class="form-group">
                 <label for="degree_type"><i class="fa fa-graduation-cap"></i> Degree Type:</label>
-                <input type="text" class="form-control" id="degree_type" name="degree_type" value="{{ request.args.get('user.degree_type') }}">
+                
+                <input type="radio" id="degree_type" name="degree_type" value="bachelors" {% if user.degree_type == 'bachelors' %}checked {% endif %}/>
+                <label for="bachelors">bachelors</label>
+
+                <input type="radio" id="degree_type" name="degree_type" value="masters" {% if user.degree_type == 'masters' %}checked {% endif %} />
+                <label for="masters">masters</label>
+
+                <input type="radio" id="degree_type" name="degree_type" value="phd" {% if user.degree_type == 'phd' %}checked {% endif %} />
+                <label for="phd">phd</label>
+
               </div>
               <div class="form-group">
                 <label for="citizenship"><i class="fa fa-flag"></i> Citizenship:</label>
-                <input type="text" class="form-control" id="citizenship" name="citizenship" value="{{ request.args.get('user.citizenship') }}">
+                <input type="text" class="form-control" id="citizenship" name="citizenship" value="{{user.citizenship}}">
               </div>
           {% else: %}
               <div class="form-group">
                 <label for="family"><i class="fa fa-users"></i> Family:</label>
-                <input type="text" class="form-control" id="family" name="family" defaultValue= {{user.family}} value="{{ request.args.get('user.family') }}">
+                
+                <!--<input type="text" class="form-control" id="family" name="family" defaultValue= {{user.family}} value="{{user.family}}">
+                -->
+
+                <input type="radio" id="family" name="family" value="true" {% if user.family == "True" %}checked {% endif %}/>
+                <label for="true">true</label>
+
+                <input type="radio" id="family" name="family" value="false" {% if user.family == "False" %}checked {% endif %} />
+                <label for="false">false</label>
+
               </div>
               <div class="form-group">
                 <label for="designation"><i class="fa fa-briefcase"></i> Designation:</label>
-                <input type="text" class="form-control" id="designation" name="designation" placeholder={{user.designation}} value="{{ request.args.get('user.designation') }}">
+               
+                <input type="radio" id="designation" name="designation" value="staff" {% if user.designation == 'staff' %}checked {% endif %}/>
+                <label for="staff">staff</label>
+
+                <input type="radio" id="designation" name="designation" value="faculty" {% if user.designation == 'faculty' %}checked {% endif %} />
+                <label for="faculty">faculty</label>
               </div>
           {% endif %}
 

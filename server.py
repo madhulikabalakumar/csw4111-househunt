@@ -341,6 +341,7 @@ def details():
     house_details = g.conn.execute("SELECT flat_no, bedrooms, bathrooms, price, lease_duration, sq_footage, furnishing_status, availability_status,pet_friendly, parking_space, safety_rating, contact FROM House_Belongs_To_Brokered_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchone()
     bldg_details = g.conn.execute("SELECT bldg_address, elevator, laundry, super, dist_to_CU, dist_to_public_transport, prox_to_groc_store, entertainment_rating FROM Building WHERE bldg_address = %s", bldg_name).fetchone()
     broker_details = g.conn.execute("SELECT name, company, contact, rating FROM Broker WHERE contact = %s", house_details.contact).fetchone()
+    broker_details = g.conn.execute("SELECT name, company, contact, rating FROM Broker WHERE contact = %s", house_details.contact).fetchone()
     
     userid = conn.execute("SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchall()
     student_details = conn.execute("SELECT C.account_id, C.pronouns, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id IN (SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s)", flat, bldg_name)
@@ -444,7 +445,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=7140, type=int)
+  @click.argument('PORT', default=5291, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
