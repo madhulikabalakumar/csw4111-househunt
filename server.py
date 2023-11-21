@@ -15,7 +15,7 @@ from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify, url_for
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import secrets
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from sqlalchemy.exc import IntegrityError
 
 class User(UserMixin):
@@ -59,19 +59,11 @@ def get_all_houses(conn, sort_by='flat_no', order='asc'):
     - List of houses.
     """
     try:
-        # Ensure the requested column is valid, default to flat_no if not
-        valid_columns = ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status', 'availability_status','details']
+        valid_columns = ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status']
         column = sort_by if sort_by in valid_columns else 'flat_no'
 
-        # Determine the order direction
         valid_orders = ['asc', 'desc']
         order = order if order in valid_orders else 'asc'
-
-        """# Toggle the order direction if the same column is clicked again
-        if sort_by == column:
-            order = 'asc' if order == 'asc' else 'asc'
-        else:
-            order = order if order in ['asc', 'desc'] else 'asc'"""
         
         query = text(f"SELECT * FROM House_Belongs_To_Brokered_By ORDER BY {column} {order}")
         
@@ -87,39 +79,29 @@ def get_all_houses(conn, sort_by='flat_no', order='asc'):
 def filter_houses(houses, filter_params):
     filtered_houses = houses
 
-    # Building Address Filter
     addresses_to_filter = filter_params.get('bldg_address', [])
     if addresses_to_filter:
         filtered_houses = [house for house in filtered_houses if house['bldg_address'] in addresses_to_filter]
 
-    # Bedrooms Filter
     bedrooms_to_filter = filter_params.get('bedrooms', [])
     if bedrooms_to_filter:
         filtered_houses = [house for house in filtered_houses if str(house['bedrooms']) in bedrooms_to_filter]
 
-    # Bathrooms Filter
     bathrooms_to_filter = filter_params.get('bathrooms', [])
     if bathrooms_to_filter:
         filtered_houses = [house for house in filtered_houses if str(house['bathrooms']) in bathrooms_to_filter]
 
-    # Furnishing Status Filter
     furnishing_status_to_filter = filter_params.get('furnishing_status', [])
     if furnishing_status_to_filter:
         filtered_houses = [house for house in filtered_houses if house['furnishing_status'] in furnishing_status_to_filter]
 
-    # Availability Status Filter
-    availability_status_to_filter = filter_params.get('availability_status', [])
-    if availability_status_to_filter:
-        filtered_houses = [house for house in filtered_houses if house['availability_status'] in availability_status_to_filter]
-
-    # Price Filter
     max_price = filter_params.get('max_price')
     if max_price:
         try:
             max_price = float(max_price)
             filtered_houses = [house for house in filtered_houses if house['price'] <= max_price]
         except ValueError:
-            pass  # Handle invalid input gracefully
+            pass
 
     return filtered_houses
 
@@ -199,18 +181,8 @@ def teardown_request(exception):
 #
 @app.route('/')
 def index():
-    """
-    request is a special object that Flask provides to access web request information:
 
-    request.method:   "GET" or "POST"
-    request.form:     if the browser submitted a form, this contains the data in the form
-    request.args:     dictionary of URL arguments, e.g., {a:1, b:2} for http://localhost?a=1&b=2
-
-    See its API: https://flask.palletsprojects.com/en/2.0.x/api/?highlight=incoming%20request%20data
-
-    """
-
-    # DEBUG: this is debugging code to see what request looks like
+    #g.conn.execute("UPDATE Lease_Info_Rented_By SET lease_end_date = '2026-03-01' WHERE lease_no = 22 AND flat_no = 1 AND bldg_address = '236 Amsterdam Ave'")
     print(request.args)
 
     sort_by = request.args.get('sort_by', 'flat_no')
@@ -218,19 +190,36 @@ def index():
 
     houses = get_all_houses(g.conn, sort_by, order)
 
-    # Handle filtering logic
+    for house in houses:
+        query = "SELECT lease_end_date FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s ORDER BY lease_end_date DESC LIMIT 1"
+        latest_lease_end_date = conn.execute(query, (house['flat_no'], house['bldg_address'])).fetchone()
+
+        if latest_lease_end_date and latest_lease_end_date[0]:
+            availability_date = latest_lease_end_date[0] + timedelta(days=1)
+        else:
+            availability_date = date.today() + timedelta(days=1)
+
+        house['availability_date'] = availability_date
+
+    filter_move_in_date = 'filter_move_in_date' in request.args
+
+    filtered_houses = []
+    for house in houses:
+        if filter_move_in_date and current_user.is_authenticated and current_user.move_in_date >= house['availability_date']:
+            filtered_houses.append(house)
+        elif not filter_move_in_date:
+            filtered_houses.append(house)
+
     filter_params = {
         'bldg_address': request.args.getlist('bldg_address'),
         'bedrooms': request.args.getlist('bedrooms'), 
         'bathrooms': request.args.getlist('bathrooms'),
         'furnishing_status': request.args.getlist('furnishing_status'),
-        'availability_status': request.args.getlist('availability_status'),
         'max_price': request.args.get('max_price'),
         'min_sq_footage': request.args.get('min_sq_footage'),
     }
-    houses = filter_houses(houses, filter_params)
+    filtered_houses = filter_houses(filtered_houses, filter_params)
 
-    # Get unique filter values
     unique_bldg_addresses = g.conn.execute("SELECT DISTINCT bldg_address FROM House_Belongs_To_Brokered_By ORDER BY bldg_address ASC").fetchall()
     unique_bldg_addresses = [row[0] for row in unique_bldg_addresses]
     unique_bedroom_counts = g.conn.execute("SELECT DISTINCT bedrooms FROM House_Belongs_To_Brokered_By ORDER BY bedrooms ASC").fetchall()
@@ -239,15 +228,12 @@ def index():
     unique_bathroom_counts = [row[0] for row in unique_bathroom_counts]
     unique_furnishing_statuses = g.conn.execute("SELECT DISTINCT furnishing_status FROM House_Belongs_To_Brokered_By ORDER BY furnishing_status ASC").fetchall()
     unique_furnishing_statuses = [row[0] for row in unique_furnishing_statuses]
-    unique_availability_statuses = g.conn.execute("SELECT DISTINCT availability_status FROM House_Belongs_To_Brokered_By ORDER BY availability_status ASC").fetchall()
-    unique_availability_statuses = [row[0] for row in unique_availability_statuses]
 
-    return render_template('index.html', houses=houses, sort_by=sort_by, order=order,
+    return render_template('index.html', houses=filtered_houses, sort_by=sort_by, order=order,
                            unique_bldg_addresses=unique_bldg_addresses,
                            unique_bedroom_counts=unique_bedroom_counts,
                            unique_bathroom_counts=unique_bathroom_counts,
                            unique_furnishing_statuses=unique_furnishing_statuses,
-                           unique_availability_statuses=unique_availability_statuses,
                            filter_params=filter_params)
 
 
@@ -255,7 +241,6 @@ def index():
 def login():
     if request.method == 'POST':
         account_id = request.form['account_id']
-        # Replace this with your database query to retrieve user data
         user = load_user(account_id)
         
         if user:
@@ -406,7 +391,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=9140, type=int)
+  @click.argument('PORT', default=4111, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
