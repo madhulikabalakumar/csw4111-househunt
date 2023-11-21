@@ -6,17 +6,55 @@
 {% block content %}
     <h1 class="page-heading">User Registration</h1>
 
-    <form method="POST" action="/register">
-      <label for="account_id">Account ID:</label>
-      <input type="text" name="account_id" required><br>
+    <form method="POST" action="/register" id="registrationForm">
+        <label for="account_id">Account ID:</label>
+        <input type="text" name="account_id" required><br>
 
-      <label for="pronouns">Pronouns:</label>
-      <input type="text" name="pronouns" required><br>
+        <label for="pronouns">Pronouns:</label>
+        <input type="text" name="pronouns" required><br>
 
-      <label for="move_in_date">Move-in Date:</label>
-      <input type="date" name="move_in_date" required><br>
+        <label for="move_in_date">Move-in Date:</label>
+        <input type="date" name="move_in_date" required min="{{ current_date }}"><br>
 
-      <input type="submit" value="Register">
+        <label>Type of User:</label>
+        <input type="radio" name="user_type" value="student" onclick="showFields('student')"> Student
+        <input type="radio" name="user_type" value="non_student" onclick="showFields('non_student')"> Non-Student<br>
+
+        <!-- Student Fields -->
+        <div id="studentFields" style="display: none;">
+            <label for="citizenship">Citizenship:</label>
+            <input type="text" name="citizenship"><br>
+
+            <label for="degree_type">Degree Type:</label>
+            <input type="radio" name="degree_type" value="bachelors"> Bachelors
+            <input type="radio" name="degree_type" value="masters"> Masters
+            <input type="radio" name="degree_type" value="phd"> PhD<br>
+        </div>
+
+        <!-- Non-Student Fields -->
+        <div id="nonStudentFields" style="display: none;">
+            <label for="family">Family:</label>
+            <input type="radio" name="family" value="True"> Yes
+            <input type="radio" name="family" value="False"> No<br>
+
+            <label for="designation">Designation:</label>
+            <input type="radio" name="designation" value="faculty"> Faculty
+            <input type="radio" name="designation" value="staff"> Staff<br>
+        </div>
+
+        <input type="submit" value="Register">
     </form>
-{% endblock %}
 
+    <script>
+        function showFields(userType) {
+            document.getElementById('studentFields').style.display = 'none';
+            document.getElementById('nonStudentFields').style.display = 'none';
+
+            if (userType === 'student') {
+                document.getElementById('studentFields').style.display = 'block';
+            } else if (userType === 'non_student') {
+                document.getElementById('nonStudentFields').style.display = 'block';
+            }
+        }
+    </script>
+{% endblock %}

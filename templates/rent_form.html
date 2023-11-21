@@ -10,10 +10,10 @@
 
     <form method="post">
         <label for="lease_start_date">Lease Start Date:</label>
-        <input type="date" name="lease_start_date" required>
+        <input type="date" name="lease_start_date" required min="{{ current_date }}">
 
         <label for="lease_end_date">Lease End Date:</label>
-        <input type="date" name="lease_end_date" required>
+        <input type="date" name="lease_end_date" required min="{{ current_date }}">
 
         <input type="submit" value="Submit">
     </form>
