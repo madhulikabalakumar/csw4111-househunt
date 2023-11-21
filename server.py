@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify, url_for
+from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify, url_for, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import secrets
 from datetime import datetime, date, timedelta
@@ -105,6 +105,18 @@ def filter_houses(houses, filter_params):
 
     return filtered_houses
 
+def get_availability_date(flat_no, bldg_address):
+    query = "SELECT lease_end_date FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s ORDER BY lease_end_date DESC LIMIT 1"
+    latest_lease_end_date = conn.execute(query, (flat_no, bldg_address)).fetchone()
+
+    if latest_lease_end_date and latest_lease_end_date[0]:
+        availability_date = latest_lease_end_date[0] + timedelta(days=1)
+    else:
+        availability_date = date.today() + timedelta(days=1)
+    return availability_date
+
+
+
 def update_profile(field, value, user_id):
 
     if field == 'pronouns':
@@ -193,7 +205,7 @@ def teardown_request(exception):
 @app.route('/')
 def index():
 
-    #g.conn.execute("UPDATE Lease_Info_Rented_By SET lease_end_date = '2026-03-01' WHERE lease_no = 22 AND flat_no = 1 AND bldg_address = '236 Amsterdam Ave'")
+    g.conn.execute("UPDATE Lease_Info_Rented_By SET lease_end_date = '2026-03-01' WHERE lease_no = 22 AND flat_no = 1 AND bldg_address = '236 Amsterdam Ave'")
     print(request.args)
 
     sort_by = request.args.get('sort_by', 'flat_no')
@@ -202,15 +214,7 @@ def index():
     houses = get_all_houses(g.conn, sort_by, order)
 
     for house in houses:
-        query = "SELECT lease_end_date FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s ORDER BY lease_end_date DESC LIMIT 1"
-        latest_lease_end_date = conn.execute(query, (house['flat_no'], house['bldg_address'])).fetchone()
-
-        if latest_lease_end_date and latest_lease_end_date[0]:
-            availability_date = latest_lease_end_date[0] + timedelta(days=1)
-        else:
-            availability_date = date.today() + timedelta(days=1)
-
-        house['availability_date'] = availability_date
+        house['availability_date'] = get_availability_date(house['flat_no'], house['bldg_address'])
 
     filter_move_in_date = 'filter_move_in_date' in request.args
 
@@ -252,14 +256,18 @@ def login():
     if request.method == 'POST':
         account_id = request.form['account_id']
         user = load_user(account_id)
-        
+
         if user:
             login_user(user)
             flash('Login successful!', 'success')
-            return redirect(request.args.get('next') or url_for('index'))
+
+            next_url = session.pop('next', None)
+
+            return redirect(next_url) if next_url else redirect(url_for('index'))
         else:
-            flash('This Account ID does not exist. Please enter valid Account ID or create a new account.', 'error')
+            flash('This Account ID does not exist. Please enter a valid Account ID or create a new account.', 'error')
             return redirect('/login')
+
 
     return render_template('login.html')
 
@@ -267,7 +275,9 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect('/')
+    next_url = session.pop('next', None)
+
+    return redirect(next_url) if next_url else redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -338,6 +348,8 @@ def details():
   
     bldg_name = bldg.replace('_', ' ')
 
+    session['next'] = url_for('details', flat=flat, bldg=bldg)
+
     house_details = g.conn.execute("SELECT flat_no, bedrooms, bathrooms, price, lease_duration, sq_footage, furnishing_status, availability_status,pet_friendly, parking_space, safety_rating, contact FROM House_Belongs_To_Brokered_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchone()
     bldg_details = g.conn.execute("SELECT bldg_address, elevator, laundry, super, dist_to_CU, dist_to_public_transport, prox_to_groc_store, entertainment_rating FROM Building WHERE bldg_address = %s", bldg_name).fetchone()
     broker_details = g.conn.execute("SELECT name, company, contact, rating FROM Broker WHERE contact = %s", house_details.contact).fetchone()
@@ -356,7 +368,6 @@ def details():
 @login_required
 def rent_form(flat_no, bldg_address):
     if request.method == 'POST':
-
         max_lease_no = g.conn.execute("SELECT MAX(lease_no) FROM Lease_Info_Rented_By").scalar()
         g.conn.execute(f"SELECT setval('lease_info_rented_by_lease_no_seq', {max_lease_no + 1})")
 
@@ -445,7 +456,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=5291, type=int)
+  @click.argument('PORT', default=4111, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.

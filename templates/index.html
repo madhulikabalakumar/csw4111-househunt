@@ -124,7 +124,7 @@
                             <td>{{ house.price }}</td>
                             <td>{{ house.sq_footage }}</td>
                             <td>{{ house.furnishing_status }}</td>
-                            <td>{{ house.availability_status }}</td>
+                            <td>{{ house.availability_date }}</td>
                             <td><button type="submit" class="btn btn-primary" onclick="window.location.href='{{ url_for('details', flat=house.flat_no, bldg=house.bldg_address.replace(' ', '_') ) }}';">Display Details</button></td>
                         </tr>
                     {% endfor %}
