@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify, url_for
+from flask import Flask, request, render_template, g, redirect, Response, abort, flash, request, jsonify, url_for, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import secrets
 from datetime import datetime, date, timedelta
@@ -256,14 +256,18 @@ def login():
     if request.method == 'POST':
         account_id = request.form['account_id']
         user = load_user(account_id)
-        
+
         if user:
             login_user(user)
             flash('Login successful!', 'success')
-            return redirect(request.args.get('next') or url_for('index'))
+
+            next_url = session.pop('next', None)
+
+            return redirect(next_url) if next_url else redirect(url_for('index'))
         else:
-            flash('This Account ID does not exist. Please enter valid Account ID or create a new account.', 'error')
+            flash('This Account ID does not exist. Please enter a valid Account ID or create a new account.', 'error')
             return redirect('/login')
+
 
     return render_template('login.html')
 
@@ -271,7 +275,9 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect('/')
+    next_url = session.pop('next', None)
+
+    return redirect(next_url) if next_url else redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -342,6 +348,8 @@ def details():
   
     bldg_name = bldg.replace('_', ' ')
 
+    session['next'] = url_for('details', flat=flat, bldg=bldg)
+
     house_details = g.conn.execute("SELECT flat_no, bedrooms, bathrooms, price, lease_duration, sq_footage, furnishing_status, availability_status,pet_friendly, parking_space, safety_rating, contact FROM House_Belongs_To_Brokered_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchone()
     bldg_details = g.conn.execute("SELECT bldg_address, elevator, laundry, super, dist_to_CU, dist_to_public_transport, prox_to_groc_store, entertainment_rating FROM Building WHERE bldg_address = %s", bldg_name).fetchone()
     broker_details = g.conn.execute("SELECT name, company, contact, rating FROM Broker WHERE contact = %s", house_details.contact).fetchone()
@@ -360,7 +368,6 @@ def details():
 @login_required
 def rent_form(flat_no, bldg_address):
     if request.method == 'POST':
-
         max_lease_no = g.conn.execute("SELECT MAX(lease_no) FROM Lease_Info_Rented_By").scalar()
         g.conn.execute(f"SELECT setval('lease_info_rented_by_lease_no_seq', {max_lease_no + 1})")
 
