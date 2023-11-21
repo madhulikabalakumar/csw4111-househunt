@@ -33,16 +33,16 @@
 
         <h4><strong>Amenities</strong></h4>
         <div class="w3-row w3-large">
-            <div class="w3-col s6">
-                <p><i class="fa fa-fw fa-wheelchair"></i> Elevator: {{bldg.elevator}}</p>
-                <p><i class="fa fa-fw fa-shower"></i>Laundry: {{bldg.laundry}}</p>
-                <p><i class="fa fa-fw fa-male"></i>Super: {{bldg.super}}</p>
-            </div>
-            <div class="w3-col s6">
-                <p><i class="fa fa-fw fa-university"></i>Distance to Columbia Univeristy: {{bldg.dist_to_CU}} miles</p>
-                <p><i class="fa fa-fw fa-subway"></i> Distance to Public Transport: {{bldg.dist_to_public_transport}} miles</p>
-                <p><i class="fa fa-fw fa-shopping-basket"></i> Distance to Closest Grocery Store: {{bldg.prox_to_groc_store}} miles</p>
-            </div>
+          <div class="w3-col s6">
+            <p><i class="fa fa-fw fa-wheelchair"></i> Elevator: {{bldg.elevator}}</p>
+            <p><i class="fa fa-fw fa-shower"></i>Laundry: {{bldg.laundry}}</p>
+            <p><i class="fa fa-fw fa-male"></i>Super: {{bldg.super}}</p>
+          </div>
+          <div class="w3-col s6">
+            <p><i class="fa fa-fw fa-university"></i>Distance to Columbia Univeristy: {{bldg.dist_to_CU}} miles</p>
+            <p><i class="fa fa-fw fa-subway"></i> Distance to Public Transport: {{bldg.dist_to_public_transport}} miles</p>
+            <p><i class="fa fa-fw fa-shopping-cart"></i> Distance to Closest Grocery Store: {{bldg.prox_to_groc_store}} miles</p>
+          </div>
         </div>
 
         <hr>
@@ -73,21 +73,21 @@
         
         <h4><strong>Previous Renters</strong></h4>
 
-        <div class="w3-row-padding w3-padding-16">
-            {% for s in student %}
-                <div class="w3-third w3-margin-bottom">
-                    <div class="w3-container w3-light-grey">
-                        <h3>Columbia Student</h3>
-                        <h6 class="w3-opacity">{{s.pronouns}}</h6>
-                        <p><i class="fa fa-user-circle"></i> Account Id: {{s.account_id}}</p>
-                        <p><i class="fa fa-graduation-cap"></i> Degree Type: {{s.citizenship}}</p>
-                        <p><i class="fa fa-flag"></i> Citizenship: {{s.citizenship}}</p>
-                        <!--<p class="w3-large"><i class="fa fa-bath"></i> <i class="fa fa-phone"></i> <i class="fa fa-wifi"></i></p>-->
-                        <!--<button class="w3-button w3-block w3-black w3-margin-bottom">Choose Room</button>-->
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
+          <div class="w3-row-padding w3-padding-16">
+          {% for s in student %}
+            <div class="w3-third w3-margin-bottom">
+              <div class="w3-container w3-light-grey">
+                <h3>Columbia Student</h3>
+                <h6 class="w3-opacity">{{s.pronouns}}</h6>
+                <p><i class="fa fa-user-circle"></i> Account Id: {{s.account_id}}</p>
+                <p><i class="fa fa-graduation-cap"></i> Degree Type: {{s.citizenship}}</p>
+                <p><i class="fa fa-flag"></i> Citizenship: {{s.citizenship}}</p>
+                <!--<p class="w3-large"><i class="fa fa-bath"></i> <i class="fa fa-phone"></i> <i class="fa fa-wifi"></i></p>-->
+                <!--<button class="w3-button w3-block w3-black w3-margin-bottom">Choose Room</button>-->
+              </div>
+            </div>
+          {% endfor %}
+          </div>
 
         <div class="w3-row-padding w3-padding-16">
             {% for st in staff %}
@@ -102,6 +102,11 @@
                 </div>
             {% endfor %}
         </div>
+
+        <hr>
+
+                  
+  </div>
 
         <div class="w3-col s6 text-right">
             <a href="{{ url_for('rent_form', flat_no=house.flat_no, bldg_address=bldg.bldg_address.replace(' ', '_')) }}" class="btn btn-primary">Rent This House</a>
