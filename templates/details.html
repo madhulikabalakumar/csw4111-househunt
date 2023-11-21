@@ -13,9 +13,6 @@
             <div class="w3-col s6">
                 <h1 class="page-heading">House: #{{house.flat_no}} {{bldg.bldg_address}}</h1>
             </div>
-            <div class="w3-col s6 text-right">
-                <a href="{{ url_for('rent_form', flat_no=house.flat_no, bldg_address=bldg.bldg_address.replace(' ', '_')) }}" class="btn btn-primary">Rent This House</a>
-            </div>
         </div>
 
         <div class="w3-row w3-large">
@@ -65,9 +62,10 @@
         <br>
         <div class="w3-row w3-large">
             <div class="w3-col s6">
-                <p><i class="fa fa-fw fa-user"></i>Name: {{broker.name}}</p>
-                <p><i class="fa fa-fw fa-briefcase"></i>Company: {{broker.company}}</p>
-                <p><i class="fa fa-fw fa-star"></i>Rating: {{broker.rating}}</p>
+            <p><i class="fa fa-fw fa-user"></i>Name: {{broker.name}}</p>
+            <p><i class="fa fa-fw fa-briefcase"></i>Company: {{broker.company}}</p>
+            <p><i class="fa fa-fw fa-phone"></i>Contact: {{broker.contact}}</p>
+            <p><i class="fa fa-fw fa-star"></i>Rating: {{broker.rating}}</p>
             </div>
         </div>      
         
@@ -104,6 +102,11 @@
                 </div>
             {% endfor %}
         </div>
+
+        <div class="w3-col s6 text-right">
+            <a href="{{ url_for('rent_form', flat_no=house.flat_no, bldg_address=bldg.bldg_address.replace(' ', '_')) }}" class="btn btn-primary">Rent This House</a>
+        </div>
+        
     </div>
 </div>
 

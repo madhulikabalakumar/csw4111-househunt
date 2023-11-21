@@ -1,0 +1,72 @@
+<!-- profile.html -->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+<head>
+   
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link href='https://fonts.googleapis.com/css?family=RobotoDraft' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><style>
+    html,body,h1,h2,h3,h4,h5 {font-family: "RobotoDraft", "Roboto", sans-serif}
+    .w3-bar-block .w3-bar-item {padding: 16px}
+    </style>
+ </head>
+
+{% extends 'base.html' %}
+
+{% block title %}Edit User Profile{% endblock %}
+
+{% block content %}
+
+ <!-- Page Container -->
+
+<div class="w3-container w3-content" style="max-width:1400px; margin-top:20px">  
+        <!-- Profile -->
+        <div class="w3-card w3-round w3-white">
+          <div class="w3-container w3-blue-grey w3-center">
+            <h4 style="margin-top:20px">My Profile</h4>
+           <p class="w3-center"><i class="fa fa-user-circle fa-5x" class="w3-margin w3-circle" alt="Person" style="width:100%"></i></p>
+           <hr>
+
+           <p><i class="fa fa-user-circle"></i> Account Id: {{user.account_id }}</p>
+           
+           <form action="{{ url_for('editprofile', is_student=is_student) }}" method="post">
+           <div class="form-group">
+            <label for="pronouns"><i class="fa fa-mars"></i> Pronouns:</label>
+            <input type="text" class="form-control" id="pronouns" name="pronouns" value="{{ request.args.get('user.pronouns') }}">
+           </div>
+
+           <div class="form-group">
+            <label for="move_in_date"><i class="fa fa-fw fa-calendar"></i> Move in date:</label>
+            <input type="date" class="form-control" id="move_in_date" name="move_in_date" value="{{ request.args.get('user.move_in_date') }}">
+           </div>
+
+          {% if is_student == 1:%}
+              <div class="form-group">
+                <label for="degree_type"><i class="fa fa-graduation-cap"></i> Degree Type:</label>
+                <input type="text" class="form-control" id="degree_type" name="degree_type" value="{{ request.args.get('user.degree_type') }}">
+              </div>
+              <div class="form-group">
+                <label for="citizenship"><i class="fa fa-flag"></i> Citizenship:</label>
+                <input type="text" class="form-control" id="citizenship" name="citizenship" value="{{ request.args.get('user.citizenship') }}">
+              </div>
+          {% else: %}
+              <div class="form-group">
+                <label for="family"><i class="fa fa-users"></i> Family:</label>
+                <input type="text" class="form-control" id="family" name="family" defaultValue= {{user.family}} value="{{ request.args.get('user.family') }}">
+              </div>
+              <div class="form-group">
+                <label for="designation"><i class="fa fa-briefcase"></i> Designation:</label>
+                <input type="text" class="form-control" id="designation" name="designation" placeholder={{user.designation}} value="{{ request.args.get('user.designation') }}">
+              </div>
+          {% endif %}
+
+             <input type="submit" value="Submit">
+            </form>
+        </div>
+      </div>
+     
+{% endblock %}
