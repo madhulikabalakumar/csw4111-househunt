@@ -105,6 +105,18 @@ def filter_houses(houses, filter_params):
 
     return filtered_houses
 
+def get_availability_date(flat_no, bldg_address):
+    query = "SELECT lease_end_date FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s ORDER BY lease_end_date DESC LIMIT 1"
+    latest_lease_end_date = conn.execute(query, (flat_no, bldg_address)).fetchone()
+
+    if latest_lease_end_date and latest_lease_end_date[0]:
+        availability_date = latest_lease_end_date[0] + timedelta(days=1)
+    else:
+        availability_date = date.today() + timedelta(days=1)
+    return availability_date
+
+
+
 def update_profile(field, value, user_id):
 
     if field == 'pronouns':
@@ -193,7 +205,7 @@ def teardown_request(exception):
 @app.route('/')
 def index():
 
-    #g.conn.execute("UPDATE Lease_Info_Rented_By SET lease_end_date = '2026-03-01' WHERE lease_no = 22 AND flat_no = 1 AND bldg_address = '236 Amsterdam Ave'")
+    g.conn.execute("UPDATE Lease_Info_Rented_By SET lease_end_date = '2026-03-01' WHERE lease_no = 22 AND flat_no = 1 AND bldg_address = '236 Amsterdam Ave'")
     print(request.args)
 
     sort_by = request.args.get('sort_by', 'flat_no')
@@ -202,15 +214,7 @@ def index():
     houses = get_all_houses(g.conn, sort_by, order)
 
     for house in houses:
-        query = "SELECT lease_end_date FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s ORDER BY lease_end_date DESC LIMIT 1"
-        latest_lease_end_date = conn.execute(query, (house['flat_no'], house['bldg_address'])).fetchone()
-
-        if latest_lease_end_date and latest_lease_end_date[0]:
-            availability_date = latest_lease_end_date[0] + timedelta(days=1)
-        else:
-            availability_date = date.today() + timedelta(days=1)
-
-        house['availability_date'] = availability_date
+        house['availability_date'] = get_availability_date(house['flat_no'], house['bldg_address'])
 
     filter_move_in_date = 'filter_move_in_date' in request.args
 
@@ -445,7 +449,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=5291, type=int)
+  @click.argument('PORT', default=4111, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
