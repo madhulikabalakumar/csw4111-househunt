@@ -107,14 +107,14 @@ def filter_houses(houses, filter_params):
 
 def get_availability_date(flat_no, bldg_address):
     query = "SELECT lease_end_date FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s ORDER BY lease_end_date DESC LIMIT 1"
-    latest_lease_end_date = conn.execute(query, (flat_no, bldg_address)).fetchone()
+    latest_lease_end_date = g.conn.execute(query, (flat_no, bldg_address)).fetchone()
 
     if latest_lease_end_date and latest_lease_end_date[0]:
         availability_date = latest_lease_end_date[0] + timedelta(days=1)
     else:
         availability_date = date.today() + timedelta(days=1)
-    return availability_date
 
+    return availability_date
 
 
 def update_profile(field, value, user_id):
@@ -190,18 +190,6 @@ def teardown_request(exception):
   except Exception as e:
     pass
 
-# @app.route is a decorator around index() that means:
-#   run index() whenever the user tries to access the "/" path using a GET request
-#
-# If you wanted the user to go to, for example, localhost:8111/foobar/ with POST or GET then you could use:
-#
-#       @app.route("/foobar/", methods=["POST", "GET"])
-#
-# PROTIP: (the trailing / in the path is important)
-#
-# see for routing: https://flask.palletsprojects.com/en/2.0.x/quickstart/?highlight=routing
-# see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
-#
 @app.route('/')
 def index():
 
@@ -267,7 +255,6 @@ def login():
         else:
             flash('This Account ID does not exist. Please enter a valid Account ID or create a new account.', 'error')
             return redirect('/login')
-
 
     return render_template('login.html')
 
@@ -401,8 +388,14 @@ def rent_form(flat_no, bldg_address):
             flash(f"An error occurred: {str(e)}", "error")
             print(f"Exception: {e}")
 
+    availability_date = get_availability_date(flat_no, bldg_address.replace('_', ' '))
+    house_details = g.conn.execute(
+        "SELECT lease_duration FROM House_Belongs_To_Brokered_By WHERE flat_no = %s AND bldg_address = %s",
+        (flat_no, bldg_address.replace('_', ' '))
+    ).fetchone()
+
     current_date = date.today().isoformat()
-    return render_template('rent_form.html', flat_no=flat_no, bldg_address=bldg_address, current_date=current_date)
+    return render_template('rent_form.html', flat_no=flat_no, bldg_address=bldg_address, current_date=current_date, availability_date=availability_date, lease_duration=house_details['lease_duration'] if house_details else None)
 
 @app.route('/editprofile', methods=['GET', 'POST'])
 def editprofile():
