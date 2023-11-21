@@ -9,12 +9,30 @@
     </div>
 
     <form method="post">
+        <input type="hidden" id="lease_duration" name="lease_duration" value="{{ lease_duration }}">
+        <input type="hidden" id="availability_date" name="availability_date" value="{{ availability_date }}">
+
         <label for="lease_start_date">Lease Start Date:</label>
-        <input type="date" name="lease_start_date" required min="{{ current_date }}">
+        <input type="date" name="lease_start_date" id="lease_start_date" required min="{{ availability_date }}" onchange="calculateLeaseEndDate()"">
 
         <label for="lease_end_date">Lease End Date:</label>
-        <input type="date" name="lease_end_date" required min="{{ current_date }}">
+        <input type="date" name="lease_end_date" id="lease_end_date" required min="{{ availability_date }}" readonly>
 
         <input type="submit" value="Submit">
     </form>
+
+    <script>
+        function calculateLeaseEndDate() {
+            var startDate = new Date(document.getElementById('lease_start_date').value);
+            var durationMonths = parseInt(document.getElementById('lease_duration').value);
+            
+            if (!isNaN(startDate.getTime()) && !isNaN(durationMonths)) {
+                var endDate = new Date(startDate);
+                endDate.setMonth(startDate.getMonth() + durationMonths);
+
+                var formattedEndDate = endDate.toISOString().split('T')[0];
+                document.getElementById('lease_end_date').value = formattedEndDate;
+            }
+        }
+    </script>
 {% endblock %}
