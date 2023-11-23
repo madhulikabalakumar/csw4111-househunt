@@ -449,7 +449,7 @@ def editprofile():
         isstudent = 0
         user_details = g.conn.execute("SELECT C.account_id, C.pronouns, C.move_in_date, N.family, N.designation FROM CU_User C, Non_Student N WHERE C.account_id = N.account_id AND C.account_id= %s", current_user.account_id).fetchone()
 
-      
+    print(user_details)
     return render_template('editprofile.html', user=user_details, is_student=isstudent)
 
 if __name__ == "__main__":
@@ -459,7 +459,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=5297, type=int)
+  @click.argument('PORT', default=5299, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
