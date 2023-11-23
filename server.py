@@ -193,7 +193,6 @@ def teardown_request(exception):
 def index():
 
     g.conn.execute("UPDATE Lease_Info_Rented_By SET lease_end_date = '2026-03-01' WHERE lease_no = 22 AND flat_no = 1 AND bldg_address = '236 Amsterdam Ave'")
-    print(request.args)
 
     sort_by = request.args.get('sort_by', 'flat_no')
     order = request.args.get('order', 'asc')
@@ -325,17 +324,29 @@ def profile():
                     "INSERT INTO Gave_Safety_Rating (score, account_id, flat_no, bldg_address) VALUES (%s, %s, %s, %s)",
                     (srating, current_user.account_id, flat_no, bldg_address)
                 )
+
+        new_score = g.conn.execute("SELECT AVG(score) FROM Gave_Safety_Rating WHERE flat_no = %s AND bldg_address = %s", flat_no, bldg_address).scalar()
+        print(new_score)
+        g.conn.execute(
+            "UPDATE House_Belongs_To_Brokered_By SET safety_rating = %s WHERE flat_no = %s AND bldg_address = %s", 
+            int(new_score), flat_no, bldg_address)
+   
         return redirect('/profile')
 
-    lease_rating = conn.execute("SELECT L.lease_no, L.lease_start_date, L.lease_end_date, L.flat_no, L.bldg_address, G.score FROM Lease_Info_Rented_By L LEFT OUTER JOIN Gave_Safety_Rating G ON L.account_id = G.account_id AND G.flat_no = L.flat_no AND G.bldg_address=L.bldg_address WHERE L.account_id = %s", current_user.account_id)
+    lease_rating = conn.execute(
+        "SELECT L.lease_no, L.lease_start_date, L.lease_end_date, L.flat_no, L.bldg_address, G.score FROM Lease_Info_Rented_By L LEFT OUTER JOIN Gave_Safety_Rating G ON L.account_id = G.account_id AND G.flat_no = L.flat_no AND G.bldg_address=L.bldg_address WHERE L.account_id = %s", 
+        current_user.account_id)
     lease_ratings = [dict(row) for row in lease_rating]
-    print(lease_ratings)
 
-    user_details = g.conn.execute("SELECT C.account_id, C.pronouns, C.move_in_date, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id = %s", current_user.account_id).fetchone()
+    user_details = g.conn.execute(
+        "SELECT C.account_id, C.pronouns, C.move_in_date, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id = %s", 
+        current_user.account_id).fetchone()
     if user_details:
         student = 1
     else:
-        user_details = g.conn.execute("SELECT C.account_id, C.pronouns, C.move_in_date, N.family, N.designation FROM CU_User C, Non_Student N WHERE C.account_id = N.account_id AND C.account_id= %s", current_user.account_id).fetchone()
+        user_details = g.conn.execute(
+            "SELECT C.account_id, C.pronouns, C.move_in_date, N.family, N.designation FROM CU_User C, Non_Student N WHERE C.account_id = N.account_id AND C.account_id= %s", 
+            current_user.account_id).fetchone()
         student = 0
 
     return render_template('profile.html', user=user_details, leases=lease_ratings, is_student = student);
@@ -449,7 +460,6 @@ def editprofile():
         isstudent = 0
         user_details = g.conn.execute("SELECT C.account_id, C.pronouns, C.move_in_date, N.family, N.designation FROM CU_User C, Non_Student N WHERE C.account_id = N.account_id AND C.account_id= %s", current_user.account_id).fetchone()
 
-    print(user_details)
     return render_template('editprofile.html', user=user_details, is_student=isstudent)
 
 if __name__ == "__main__":
