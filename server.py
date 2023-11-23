@@ -116,7 +116,6 @@ def get_availability_date(flat_no, bldg_address):
 
     return availability_date
 
-
 def update_profile(field, value, user_id):
 
     if field == 'pronouns':
@@ -313,11 +312,24 @@ def register():
     current_date = date.today().isoformat()
     return render_template('register.html', current_date=current_date)
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    lease = conn.execute("SELECT lease_no, lease_start_date, lease_end_date, flat_no, bldg_address FROM Lease_Info_Rented_By WHERE account_id = %s;", current_user.account_id)
-    leases = [dict(row) for row in lease]
+
+    if request.method == 'POST':
+        srating = request.form['srating']
+        flat_no = request.args.get('flat')
+        bldg_address = request.args.get('bldg')
+
+        g.conn.execute(
+                    "INSERT INTO Gave_Safety_Rating (score, account_id, flat_no, bldg_address) VALUES (%s, %s, %s, %s)",
+                    (srating, current_user.account_id, flat_no, bldg_address)
+                )
+        return redirect('/profile')
+
+    lease_rating = conn.execute("SELECT L.lease_no, L.lease_start_date, L.lease_end_date, L.flat_no, L.bldg_address, G.score FROM Lease_Info_Rented_By L LEFT OUTER JOIN Gave_Safety_Rating G ON L.account_id = G.account_id AND G.flat_no = L.flat_no AND G.bldg_address=L.bldg_address WHERE L.account_id = %s", current_user.account_id)
+    lease_ratings = [dict(row) for row in lease_rating]
+    print(lease_ratings)
 
     user_details = g.conn.execute("SELECT C.account_id, C.pronouns, C.move_in_date, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id = %s", current_user.account_id).fetchone()
     if user_details:
@@ -326,7 +338,7 @@ def profile():
         user_details = g.conn.execute("SELECT C.account_id, C.pronouns, C.move_in_date, N.family, N.designation FROM CU_User C, Non_Student N WHERE C.account_id = N.account_id AND C.account_id= %s", current_user.account_id).fetchone()
         student = 0
 
-    return render_template('profile.html', user=user_details, leases=leases, is_student = student);
+    return render_template('profile.html', user=user_details, leases=lease_ratings, is_student = student);
 
 @app.route('/details')
 def details():
@@ -340,7 +352,6 @@ def details():
     house_details = g.conn.execute("SELECT flat_no, bedrooms, bathrooms, price, lease_duration, sq_footage, furnishing_status, availability_status,pet_friendly, parking_space, safety_rating, contact FROM House_Belongs_To_Brokered_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchone()
     bldg_details = g.conn.execute("SELECT bldg_address, elevator, laundry, super, dist_to_CU, dist_to_public_transport, prox_to_groc_store, entertainment_rating FROM Building WHERE bldg_address = %s", bldg_name).fetchone()
     broker_details = g.conn.execute("SELECT name, company, contact, rating FROM Broker WHERE contact = %s", house_details.contact).fetchone()
-    broker_details = g.conn.execute("SELECT name, company, contact, rating FROM Broker WHERE contact = %s", house_details.contact).fetchone()
     
     userid = conn.execute("SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchall()
     student_details = conn.execute("SELECT C.account_id, C.pronouns, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id IN (SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s)", flat, bldg_name)
@@ -349,7 +360,6 @@ def details():
     students = [dict(row) for row in student_details] 
     nonstudents = [dict(row) for row in nonstudent_details] 
     return render_template("details.html", bldg=bldg_details, house=house_details, broker=broker_details, student=students, staff=nonstudents)
-
 
 @app.route('/rent_form/<int:flat_no>/<string:bldg_address>', methods=['GET', 'POST'])
 @login_required
@@ -449,7 +459,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=4111, type=int)
+  @click.argument('PORT', default=5297, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
