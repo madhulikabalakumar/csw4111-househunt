@@ -316,27 +316,42 @@ def register():
 def profile():
 
     if request.method == 'POST':
-        srating = request.form['srating']
-        flat_no = request.args.get('flat')
+        
         bldg_address = request.args.get('bldg')
+        srating = request.form.get('srating')
+        erating = request.form.get('erating')
+     
+        if srating != None:
+            flat_no = request.args.get('flat')
 
-        g.conn.execute(
-                    "INSERT INTO Gave_Safety_Rating (score, account_id, flat_no, bldg_address) VALUES (%s, %s, %s, %s)",
-                    (srating, current_user.account_id, flat_no, bldg_address)
-                )
+            g.conn.execute(
+                        "INSERT INTO Gave_Safety_Rating (score, account_id, flat_no, bldg_address) VALUES (%s, %s, %s, %s)",
+                        (srating, current_user.account_id, flat_no, bldg_address)
+                    )
 
-        new_score = g.conn.execute("SELECT AVG(score) FROM Gave_Safety_Rating WHERE flat_no = %s AND bldg_address = %s", flat_no, bldg_address).scalar()
-        print(new_score)
-        g.conn.execute(
-            "UPDATE House_Belongs_To_Brokered_By SET safety_rating = %s WHERE flat_no = %s AND bldg_address = %s", 
-            int(new_score), flat_no, bldg_address)
+            new_safety_score = g.conn.execute("SELECT AVG(score) FROM Gave_Safety_Rating WHERE flat_no = %s AND bldg_address = %s", flat_no, bldg_address).scalar()
+            g.conn.execute(
+                "UPDATE House_Belongs_To_Brokered_By SET safety_rating = %s WHERE flat_no = %s AND bldg_address = %s", 
+                int(new_safety_score), flat_no, bldg_address)
+
+        elif erating != None:
+            g.conn.execute(
+                        "INSERT INTO Gave_Entertainment_Rating (score, account_id, bldg_address) VALUES (%s, %s, %s)",
+                        (erating, current_user.account_id, bldg_address)
+                    )
+
+            new_entertainment_score = g.conn.execute("SELECT AVG(score) FROM Gave_Entertainment_Rating WHERE bldg_address = %s", bldg_address).scalar()
+            g.conn.execute(
+                "UPDATE Building SET entertainment_rating  = %s WHERE bldg_address = %s", 
+                int(new_entertainment_score), bldg_address)
    
         return redirect('/profile')
 
     lease_rating = conn.execute(
-        "SELECT L.lease_no, L.lease_start_date, L.lease_end_date, L.flat_no, L.bldg_address, G.score FROM Lease_Info_Rented_By L LEFT OUTER JOIN Gave_Safety_Rating G ON L.account_id = G.account_id AND G.flat_no = L.flat_no AND G.bldg_address=L.bldg_address WHERE L.account_id = %s", 
+        "SELECT L.lease_no, L.lease_start_date, L.lease_end_date, L.flat_no, L.bldg_address, G.score, E.score AS escore FROM Lease_Info_Rented_By L LEFT OUTER JOIN Gave_Safety_Rating G ON L.account_id = G.account_id AND G.flat_no = L.flat_no AND G.bldg_address=L.bldg_address LEFT OUTER JOIN Gave_Entertainment_Rating E ON L.account_id = E.account_id AND E.bldg_address=L.bldg_address WHERE L.account_id = %s", 
         current_user.account_id)
     lease_ratings = [dict(row) for row in lease_rating]
+    print(lease_ratings)
 
     user_details = g.conn.execute(
         "SELECT C.account_id, C.pronouns, C.move_in_date, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id = %s", 
@@ -469,7 +484,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=5299, type=int)
+  @click.argument('PORT', default=5301, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
