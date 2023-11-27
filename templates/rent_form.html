@@ -4,21 +4,20 @@
 {% block title %}Rent Form{% endblock %}
 
 {% block content %}
-    <div class="navbar">
-        <h1 class="page-heading">Rent This House</h1>
-    </div>
+    <h1 class="page-heading">Rent This House</h1>
 
-    <form method="post">
+    <form method="post" style="max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+
         <input type="hidden" id="lease_duration" name="lease_duration" value="{{ lease_duration }}">
         <input type="hidden" id="availability_date" name="availability_date" value="{{ availability_date }}">
 
-        <label for="lease_start_date">Lease Start Date:</label>
-        <input type="date" name="lease_start_date" id="lease_start_date" required min="{{ availability_date }}" onchange="calculateLeaseEndDate()"">
+        <label for="lease_start_date" style="display: block; margin-bottom: 8px;">Lease Start Date:</label>
+        <input type="date" name="lease_start_date" id="lease_start_date" required min="{{ availability_date }}" onchange="calculateLeaseEndDate()" style="width: 100%; padding: 8px; margin-bottom: 16px;">
 
-        <label for="lease_end_date">Lease End Date:</label>
-        <input type="date" name="lease_end_date" id="lease_end_date" required min="{{ availability_date }}" readonly>
+        <label for="lease_end_date" style="display: block; margin-bottom: 8px;">Lease End Date:</label>
+        <input type="date" name="lease_end_date" id="lease_end_date" required min="{{ availability_date }}" readonly style="width: 100%; padding: 8px; margin-bottom: 16px;">
 
-        <input type="submit" value="Submit">
+        <input type="submit" value="Submit" style="background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer;">
     </form>
 
     <script>
