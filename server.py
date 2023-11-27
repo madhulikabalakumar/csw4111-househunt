@@ -107,7 +107,7 @@ def filter_houses(houses, filter_params):
 
 def get_availability_date(flat_no, bldg_address):
     query = "SELECT lease_end_date FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s ORDER BY lease_end_date DESC LIMIT 1"
-    latest_lease_end_date = g.conn.execute(query, (flat_no, bldg_address)).fetchone()
+    latest_lease_end_date = g.conn.execute(query, (flat_no, bldg_address.replace('_', ' '))).fetchone()
 
     if latest_lease_end_date and latest_lease_end_date[0]:
         availability_date = latest_lease_end_date[0] + timedelta(days=1)
@@ -405,12 +405,9 @@ def rent_form(flat_no, bldg_address):
         account_id = current_user.account_id
 
         try:
-            existing_lease = g.conn.execute(
-                "SELECT MAX(lease_end_date) FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s",
-                (flat_no, bldg_address.replace('_', ' '))
-            ).fetchone()
+            availability_date = get_availability_date(flat_no, bldg_address.replace('_', ' '))
 
-            if existing_lease and existing_lease[0] and lease_start_date <= existing_lease[0]:
+            if lease_start_date < availability_date:
                 flash("Error: Lease start date overlaps with an existing lease for this house.")
             else:
                 g.conn.execute(

@@ -49,13 +49,13 @@
                 <label for="degree_type"><i class="fa fa-graduation-cap"></i> Degree Type:</label>
                 
                 <input type="radio" id="degree_type" name="degree_type" value="bachelors" {% if user.degree_type == 'bachelors' %}checked {% endif %}/>
-                <label for="bachelors">bachelors</label>
+                <label for="bachelors">Bachelors</label>
 
                 <input type="radio" id="degree_type" name="degree_type" value="masters" {% if user.degree_type == 'masters' %}checked {% endif %} />
-                <label for="masters">masters</label>
+                <label for="masters">Masters</label>
 
                 <input type="radio" id="degree_type" name="degree_type" value="phd" {% if user.degree_type == 'phd' %}checked {% endif %} />
-                <label for="phd">phd</label>
+                <label for="phd">PhD</label>
 
               </div>
               <div class="form-group">
@@ -69,21 +69,21 @@
                 <!--<input type="text" class="form-control" id="family" name="family" defaultValue= {{user.family}} value="{{user.family}}">
                 -->
 
-                <input type="radio" id="family" name="family" value="true" {% if user.family == True %}checked {% endif %}/>
-                <label for="true">true</label>
+                <input type="radio" id="family" name="family" value="true" {% if user.family == "True" %}checked {% endif %}/>
+                <label for="true">Yes</label>
 
-                <input type="radio" id="family" name="family" value="false" {% if user.family == False %}checked {% endif %} />
-                <label for="false">false</label>
+                <input type="radio" id="family" name="family" value="false" {% if user.family == "False" %}checked {% endif %} />
+                <label for="false">No</label>
 
               </div>
               <div class="form-group">
                 <label for="designation"><i class="fa fa-briefcase"></i> Designation:</label>
                
                 <input type="radio" id="designation" name="designation" value="staff" {% if user.designation == 'staff' %}checked {% endif %}/>
-                <label for="staff">staff</label>
+                <label for="staff">Staff</label>
 
                 <input type="radio" id="designation" name="designation" value="faculty" {% if user.designation == 'faculty' %}checked {% endif %} />
-                <label for="faculty">faculty</label>
+                <label for="faculty">Faculty</label>
               </div>
           {% endif %}
 
