@@ -332,7 +332,7 @@ def profile():
             new_safety_score = g.conn.execute("SELECT AVG(score) FROM Gave_Safety_Rating WHERE flat_no = %s AND bldg_address = %s", flat_no, bldg_address).scalar()
             g.conn.execute(
                 "UPDATE House_Belongs_To_Brokered_By SET safety_rating = %s WHERE flat_no = %s AND bldg_address = %s", 
-                int(new_safety_score), flat_no, bldg_address)
+                new_safety_score, flat_no, bldg_address)
 
         elif erating != None:
             g.conn.execute(
@@ -340,10 +340,11 @@ def profile():
                         (erating, current_user.account_id, bldg_address)
                     )
 
-            new_entertainment_score = g.conn.execute("SELECT AVG(score) FROM Gave_Entertainment_Rating WHERE bldg_address = %s", bldg_address).scalar()
+            new_entertainment_score = g.conn.execute("SELECT ROUND(AVG(CAST(score AS numeric)), 2) FROM Gave_Entertainment_Rating WHERE bldg_address = %s", bldg_address).scalar()
+            
             g.conn.execute(
                 "UPDATE Building SET entertainment_rating  = %s WHERE bldg_address = %s", 
-                int(new_entertainment_score), bldg_address)
+                new_entertainment_score, bldg_address)
    
         return redirect('/profile')
 
@@ -351,7 +352,6 @@ def profile():
         "SELECT L.lease_no, L.lease_start_date, L.lease_end_date, L.flat_no, L.bldg_address, G.score, E.score AS escore FROM Lease_Info_Rented_By L LEFT OUTER JOIN Gave_Safety_Rating G ON L.account_id = G.account_id AND G.flat_no = L.flat_no AND G.bldg_address=L.bldg_address LEFT OUTER JOIN Gave_Entertainment_Rating E ON L.account_id = E.account_id AND E.bldg_address=L.bldg_address WHERE L.account_id = %s", 
         current_user.account_id)
     lease_ratings = [dict(row) for row in lease_rating]
-    print(lease_ratings)
 
     user_details = g.conn.execute(
         "SELECT C.account_id, C.pronouns, C.move_in_date, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id = %s", 
@@ -376,7 +376,7 @@ def details():
     session['next'] = url_for('details', flat=flat, bldg=bldg)
 
     house_details = g.conn.execute("SELECT flat_no, bedrooms, bathrooms, price, lease_duration, sq_footage, furnishing_status, availability_status,pet_friendly, parking_space, safety_rating, contact FROM House_Belongs_To_Brokered_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchone()
-    bldg_details = g.conn.execute("SELECT bldg_address, elevator, laundry, super, dist_to_CU, dist_to_public_transport, prox_to_groc_store, entertainment_rating FROM Building WHERE bldg_address = %s", bldg_name).fetchone()
+    bldg_details = g.conn.execute("SELECT bldg_address, elevator, laundry, super, dist_to_cu, dist_to_public_transport, prox_to_groc_store, entertainment_rating FROM Building WHERE bldg_address = %s", bldg_name).fetchone()
     broker_details = g.conn.execute("SELECT name, company, contact, rating FROM Broker WHERE contact = %s", house_details.contact).fetchone()
     
     userid = conn.execute("SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchall()
@@ -484,7 +484,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=5301, type=int)
+  @click.argument('PORT', default=5303, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
