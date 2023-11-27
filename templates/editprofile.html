@@ -36,7 +36,7 @@
            <form action="{{ url_for('editprofile', is_student=is_student) }}" method="post">
            <div class="form-group">
             <label for="pronouns"><i class="fa fa-mars"></i> Pronouns:</label>
-            <input type="text" class="form-control" id="pronouns" name="pronouns" value="{{user.pronouns }}">
+            <input type="text" class="form-control" id="pronouns" name="pronouns" value="{{user.pronouns }}" maxlength="20">
            </div>
 
            <div class="form-group">
