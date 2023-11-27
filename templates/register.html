@@ -8,10 +8,10 @@
 
     <form method="POST" action="/register" id="registrationForm">
         <label for="account_id">Account ID:</label>
-        <input type="text" name="account_id" required><br>
+        <input type="text" name="account_id" required minlength="8" maxlength="8"><br>
 
         <label for="pronouns">Pronouns:</label>
-        <input type="text" name="pronouns" required><br>
+        <input type="text" name="pronouns" required maxlength="20"><br>
 
         <label for="move_in_date">Move-in Date:</label>
         <input type="date" name="move_in_date" required min="{{ current_date }}"><br>
