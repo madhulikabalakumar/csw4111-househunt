@@ -69,6 +69,34 @@
                             <input type="text" class="form-control" id="min_sq_footage" name="min_sq_footage"  value="{{ request.args.get('min_sq_footage') }}">
                         </div>
 
+                        <!-- Elevator Filter -->
+                        <div class="form-group">
+                            <label>Elevator:</label>
+                            {% for status in unique_elevator_statuses %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="elevator_{{ status }}" name="elevator" value="{{ status }}" {% if status in request.args.getlist('elevator') %}checked{% endif %}>
+                                    <label class="form-check-label" for="elevator_{{ status }}">{{ status }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Laundry Filter -->
+                        <div class="form-group">
+                            <label>Laundry:</label>
+                            {% for status in unique_laundry_statuses %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="laundry_{{ status }}" name="laundry" value="{{ status }}" {% if status in request.args.getlist('laundry') %}checked{% endif %}>
+                                    <label class="form-check-label" for="laundry_{{ status }}">{{ status }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Distance to CU Filter -->
+                        <div class="form-group">
+                            <label for="max_dist_to_cu">Max Distance to CU:</label>
+                            <input type="text" class="form-control" id="max_dist_to_cu" name="max_dist_to_cu" value="{{ request.args.get('max_dist_to_cu') }}">
+                        </div>
+
                         <!-- Filter by Move-In Date -->
                         <div class="form-group">
                             <label>Filter by Move-In Date:</label>
@@ -99,7 +127,7 @@
 
                 <table class="table table-bordered">
                     <tr>
-                        {% for column in ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status', 'availability_date'] %}
+                        {% for column in ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status', 'safety_rating', 'elevator', 'laundry', 'dist_to_cu', 'availability_date'] %}
                             <th>
                                 {% if column == 'availability_date' %}
                                     {{ column.replace('_', ' ').capitalize() }}
@@ -113,6 +141,7 @@
                                 {% endif %}
                             </th>
                         {% endfor %}
+                        <th>Details</th>
                     </tr>
 
                     {% for house in houses %}
@@ -124,8 +153,14 @@
                             <td>{{ house.price }}</td>
                             <td>{{ house.sq_footage }}</td>
                             <td>{{ house.furnishing_status }}</td>
+                            <td>{{ house.safety_rating }}</td>
+                            <td>{{ 'Yes' if house.elevator else 'No' }}</td>
+                            <td>{{ 'Yes' if house.laundry else 'No' }}</td>
+                            <td>{{ house.dist_to_cu }}</td>
                             <td>{{ house.availability_date }}</td>
-                            <td><button type="submit" class="btn btn-primary" onclick="window.location.href='{{ url_for('details', flat=house.flat_no, bldg=house.bldg_address.replace(' ', '_') ) }}';">Display Details</button></td>
+                            <td>
+                                <button type="submit" class="btn btn-primary" onclick="window.location.href='{{ url_for('details', flat=house.flat_no, bldg=house.bldg_address.replace(' ', '_') ) }}';">Display Details</button>
+                            </td>
                         </tr>
                     {% endfor %}
                 </table>
