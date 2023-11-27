@@ -82,8 +82,13 @@
                 <p><i class="fa fa-user-circle"></i> Account Id: {{s.account_id}}</p>
                 <p><i class="fa fa-graduation-cap"></i> Degree Type: {{s.degree_type}}</p>
                 <p><i class="fa fa-flag"></i> Citizenship: {{s.citizenship}}</p>
-                <!--<p class="w3-large"><i class="fa fa-bath"></i> <i class="fa fa-phone"></i> <i class="fa fa-wifi"></i></p>-->
-                <!--<button class="w3-button w3-block w3-black w3-margin-bottom">Choose Room</button>-->
+
+                {% if s.sscore != None %}
+                <p><i class="fa fa-star"></i> Rated Safety as: {{s.sscore}}/5</p>
+                {% endif %}
+                {% if s.escore != None %}
+                <p><i class="fa fa-star-o"></i> Rated Entertainment as: {{s.escore}}/5</p>
+                {% endif %}
               </div>
             </div>
           {% endfor %}
@@ -98,13 +103,18 @@
                         <p><i class="fa fa-user-circle"></i> Account Id: {{st.account_id}}</p>
                         <p><i class="fa fa-users"></i> Family: {{st.family}}</p>
                         <p><i class="fa fa-briefcase"></i> Designation: {{st.designation}}</p>
+                        {% if st.sscore != None %}
+                        <p><i class="fa fa-star"></i> Rated Safety as: {{st.sscore}}/5</p>
+                        {% endif %}
+                        {% if st.escore != None %}
+                        <p><i class="fa fa-star-o"></i> Rated Entertainment as: {{st.escore}}/5</p>
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
         </div>
 
         <hr>
-
                   
   </div>
 

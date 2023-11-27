@@ -379,10 +379,14 @@ def details():
     bldg_details = g.conn.execute("SELECT bldg_address, elevator, laundry, super, dist_to_cu, dist_to_public_transport, prox_to_groc_store, entertainment_rating FROM Building WHERE bldg_address = %s", bldg_name).fetchone()
     broker_details = g.conn.execute("SELECT name, company, contact, rating FROM Broker WHERE contact = %s", house_details.contact).fetchone()
     
-    userid = conn.execute("SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s", flat, bldg_name).fetchall()
-    student_details = conn.execute("SELECT C.account_id, C.pronouns, S.degree_type, S.citizenship FROM CU_User C, Student S WHERE C.account_id = S.account_id AND C.account_id IN (SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s)", flat, bldg_name)
-    nonstudent_details = conn.execute("SELECT C.account_id, C.pronouns, N.family, N.designation FROM CU_User C, Non_Student N WHERE C.account_id = N.account_id AND C.account_id IN (SELECT account_id FROM Lease_Info_Rented_By WHERE flat_no = %s AND bldg_address = %s)", flat, bldg_name)
+    student_details = conn.execute(
+        "SELECT C.account_id, C.pronouns, S.degree_type, S.citizenship, G.score AS sscore, E.score AS escore FROM CU_User C, Student S, Lease_Info_Rented_By L LEFT OUTER JOIN Gave_Safety_Rating G ON L.account_id = G.account_id AND G.flat_no = L.flat_no AND G.bldg_address=L.bldg_address LEFT OUTER JOIN Gave_Entertainment_Rating E ON L.account_id = E.account_id AND E.bldg_address=L.bldg_address WHERE C.account_id = S.account_id AND L.account_id = S.account_id AND L.flat_no = %s AND L.bldg_address = %s",
+        flat, bldg_name)
 
+    nonstudent_details = conn.execute(
+        "SELECT C.account_id, C.pronouns, N.family, N.designation, G.score AS sscore, E.score AS escore FROM CU_User C, Non_Student N, Lease_Info_Rented_By L LEFT OUTER JOIN Gave_Safety_Rating G ON L.account_id = G.account_id AND G.flat_no = L.flat_no AND G.bldg_address=L.bldg_address LEFT OUTER JOIN Gave_Entertainment_Rating E ON L.account_id = E.account_id AND E.bldg_address=L.bldg_address WHERE C.account_id = N.account_id AND L.account_id = N.account_id AND L.flat_no = %s AND L.bldg_address = %s",
+        flat, bldg_name)
+  
     students = [dict(row) for row in student_details] 
     nonstudents = [dict(row) for row in nonstudent_details] 
     return render_template("details.html", bldg=bldg_details, house=house_details, broker=broker_details, student=students, staff=nonstudents)
@@ -484,7 +488,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=5303, type=int)
+  @click.argument('PORT', default=5305, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
