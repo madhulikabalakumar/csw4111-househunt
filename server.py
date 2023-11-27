@@ -59,13 +59,13 @@ def get_all_houses(conn, sort_by='flat_no', order='asc'):
     - List of houses.
     """
     try:
-        valid_columns = ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status']
+        valid_columns = ['flat_no', 'bldg_address', 'bedrooms', 'bathrooms', 'price', 'sq_footage', 'furnishing_status', 'safety_rating', 'elevator', 'laundry', 'dist_to_cu']
         column = sort_by if sort_by in valid_columns else 'flat_no'
 
         valid_orders = ['asc', 'desc']
         order = order if order in valid_orders else 'asc'
         
-        query = text(f"SELECT * FROM House_Belongs_To_Brokered_By ORDER BY {column} {order}")
+        query = text(f"SELECT H.*, B.elevator, B.laundry, B.dist_to_cu FROM House_Belongs_To_Brokered_By H JOIN Building B ON H.bldg_address = B.bldg_address ORDER BY {column} {order}")
         
         result = conn.execute(query)
         houses = [dict(row) for row in result]
@@ -95,11 +95,35 @@ def filter_houses(houses, filter_params):
     if furnishing_status_to_filter:
         filtered_houses = [house for house in filtered_houses if house['furnishing_status'] in furnishing_status_to_filter]
 
+    elevator_to_filter = filter_params.get('elevator', [])
+    if elevator_to_filter:
+        filtered_houses = [house for house in filtered_houses if str(house['elevator']) in elevator_to_filter]
+    
+    laundry_to_filter = filter_params.get('laundry', [])
+    if laundry_to_filter:
+        filtered_houses = [house for house in filtered_houses if str(house['laundry']) in laundry_to_filter]
+
     max_price = filter_params.get('max_price')
     if max_price:
         try:
             max_price = float(max_price)
             filtered_houses = [house for house in filtered_houses if house['price'] <= max_price]
+        except ValueError:
+            pass
+    
+    min_sq_footage = filter_params.get('min_sq_footage')
+    if min_sq_footage:
+        try:
+            min_sq_footage = float(min_sq_footage)
+            filtered_houses = [house for house in filtered_houses if house['sq_footage'] >= min_sq_footage]
+        except ValueError:
+            pass
+    
+    max_dist_to_cu = filter_params.get('max_dist_to_cu')
+    if max_dist_to_cu:
+        try:
+            max_dist_to_cu = float(max_dist_to_cu)
+            filtered_houses = [house for house in filtered_houses if house['dist_to_cu'] <= max_dist_to_cu]
         except ValueError:
             pass
 
@@ -215,6 +239,9 @@ def index():
         'furnishing_status': request.args.getlist('furnishing_status'),
         'max_price': request.args.get('max_price'),
         'min_sq_footage': request.args.get('min_sq_footage'),
+        'max_dist_to_cu': request.args.get('max_dist_to_cu'),
+        'elevator': request.args.getlist('elevator'), 
+        'laundry': request.args.getlist('laundry')
     }
     filtered_houses = filter_houses(filtered_houses, filter_params)
 
@@ -226,12 +253,19 @@ def index():
     unique_bathroom_counts = [row[0] for row in unique_bathroom_counts]
     unique_furnishing_statuses = g.conn.execute("SELECT DISTINCT furnishing_status FROM House_Belongs_To_Brokered_By ORDER BY furnishing_status ASC").fetchall()
     unique_furnishing_statuses = [row[0] for row in unique_furnishing_statuses]
+    unique_elevator_statuses = g.conn.execute("SELECT DISTINCT elevator FROM Building ORDER BY elevator ASC").fetchall()
+    unique_elevator_statuses = [row[0] for row in unique_elevator_statuses]
+    unique_laundry_statuses = g.conn.execute("SELECT DISTINCT laundry FROM Building ORDER BY laundry ASC").fetchall()
+    unique_laundry_statuses = [row[0] for row in unique_laundry_statuses]
+
 
     return render_template('index.html', houses=filtered_houses, sort_by=sort_by, order=order,
                            unique_bldg_addresses=unique_bldg_addresses,
                            unique_bedroom_counts=unique_bedroom_counts,
                            unique_bathroom_counts=unique_bathroom_counts,
                            unique_furnishing_statuses=unique_furnishing_statuses,
+                           unique_elevator_statuses=unique_elevator_statuses,
+                           unique_laundry_statuses=unique_laundry_statuses,
                            filter_params=filter_params)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -482,7 +516,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=4111, type=int)
+  @click.argument('PORT', default=4115, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
