@@ -191,9 +191,6 @@ def teardown_request(exception):
 
 @app.route('/')
 def index():
-
-    g.conn.execute("UPDATE Lease_Info_Rented_By SET lease_end_date = '2026-03-01' WHERE lease_no = 22 AND flat_no = 1 AND bldg_address = '236 Amsterdam Ave'")
-
     sort_by = request.args.get('sort_by', 'flat_no')
     order = request.args.get('order', 'asc')
 
@@ -411,8 +408,8 @@ def rent_form(flat_no, bldg_address):
                 flash("Error: Lease start date overlaps with an existing lease for this house.")
             else:
                 g.conn.execute(
-                    "INSERT INTO Lease_Info_Rented_By (lease_start_date, account_id, flat_no, bldg_address) VALUES (%s, %s, %s, %s)",
-                    (lease_start_date, account_id, flat_no, bldg_address.replace('_', ' '))
+                    "INSERT INTO Lease_Info_Rented_By (lease_start_date, lease_end_date, account_id, flat_no, bldg_address) VALUES (%s, %s, %s, %s, %s)",
+                    (lease_start_date, lease_end_date, account_id, flat_no, bldg_address.replace('_', ' '))
                 )
                 flash("Lease created successfully!")
                 return redirect(url_for('index'))
@@ -485,7 +482,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=5305, type=int)
+  @click.argument('PORT', default=4111, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
