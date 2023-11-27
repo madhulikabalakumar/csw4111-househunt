@@ -69,10 +69,10 @@
                 <!--<input type="text" class="form-control" id="family" name="family" defaultValue= {{user.family}} value="{{user.family}}">
                 -->
 
-                <input type="radio" id="family" name="family" value="true" {% if user.family == "True" %}checked {% endif %}/>
+                <input type="radio" id="family" name="family" value="true" {% if user.family == True %}checked {% endif %}/>
                 <label for="true">Yes</label>
 
-                <input type="radio" id="family" name="family" value="false" {% if user.family == "False" %}checked {% endif %} />
+                <input type="radio" id="family" name="family" value="false" {% if user.family == False %}checked {% endif %} />
                 <label for="false">No</label>
 
               </div>
