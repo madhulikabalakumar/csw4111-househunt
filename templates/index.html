@@ -60,13 +60,13 @@
                         <!-- Price Filter -->
                         <div class="form-group">
                             <label for="max_price">Max Price:</label>
-                            <input class="form-control" id="max_price" name="max_price" value="{{ request.args.get('max_price') }}" type="number">
+                            <input class="form-control" id="max_price" name="max_price" value="{{ request.args.get('max_price') }}" type="number" min ="0">
                         </div>
 
                         <!-- Sq Footage Filter -->
                         <div class="form-group">
                             <label for="min_sq_footage">Min Sq Footage:</label>
-                            <input class="form-control" id="min_sq_footage" name="min_sq_footage"  value="{{ request.args.get('min_sq_footage') }}" type="number">
+                            <input class="form-control" id="min_sq_footage" name="min_sq_footage"  value="{{ request.args.get('min_sq_footage') }}" type="number" min ="0">
                         </div>
 
                         <!-- Elevator Filter -->
