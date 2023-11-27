@@ -22,7 +22,7 @@ As proposed in Part 1, the following features are supported by the web applicati
 The following webpages have interesting database operations:  
 
  **1. Interesting SQL Queries: Details and Profile pages**  
-   The SQL queries for both these webpages use LEFT OUTER JOIN as follows:
+   The SQL queries for both these webpages use LEFT OUTER JOIN. For example:  
 
    student_details = conn.execute( "SELECT C.account_id, C.pronouns, S.degree_type, S.citizenship, G.score AS sscore, E.score AS escore FROM CU_User C, Student S, Lease_Info_Rented_By L LEFT OUTER JOIN Gave_Safety_Rating G ON L.account_id = G.account_id AND G.flat_no = L.flat_no AND G.bldg_address=L.bldg_address LEFT OUTER JOIN Gave_Entertainment_Rating E ON L.account_id = E.account_id AND E.bldg_address=L.bldg_address WHERE C.account_id = S.account_id AND L.account_id = S.account_id AND L.flat_no = %s AND L.bldg_address = %s", flat, bldg_name)
 
