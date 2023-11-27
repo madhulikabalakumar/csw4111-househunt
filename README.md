@@ -12,10 +12,12 @@ Madhulika Balakumar (mb5144)
 
 As proposed in Part 1, the following features are supported by the web application:
 
-1. Browse house listings and book _available_ houses after registering/logging in
-2. Filter and sort available houses based on attributes such as Number of Bedrooms, Number of Bathrooms, Price, Sq footage, Furnishing status, Availability dates 
-3. Allow renters to rate the safety of the house and the quality of entertainment around the building.
-4. View a list of previous renters for any given house to understand the demographic suitability of the house. The following information is displayed: Pronouns, Citizenship, Degree Type, Family (true/false) and Designation
+
+1. Browse house listings and rent _available_ houses after registering/logging in
+2. A house cannot be rented by multiple people at the same time - so, you are allowed to only choose dates after the end of the existing lease end date
+3. Filter and sort available houses based on attributes such as Number of Bedrooms, Number of Bathrooms, Price, Sq footage, Furnishing status, Availability dates, Elevator, Laundry, Safety Rating  
+4. Allow renters to rate the safety of the house and the quality of entertainment around the building from their profile page for houses they have rented previously  
+5. View a list of previous renters for any given house to understand the demographic suitability of the house. The following information is displayed: Pronouns, Citizenship, Degree Type, Family (true/false) and Designation
 
 
 ### Interesting Database Operations:  
@@ -30,3 +32,8 @@ The following webpages have interesting database operations:
 
  **2.  Interesting DB Workflow: Entertainment/Safety Reading in Profile page**  
    When a user rates the entertainment/safety of the listing, a new entry is made in the Gave_Entertainment_Rating/Gave_Safety_Rating table(s). The average rating is then calculated from the table(s) and the new rating is updated in Building/House_Belongs_To_Brokered_By table(s). The entertainment rating impacts all listings in that given building. 
+
+
+### References used for HTML 
+www.w3school.com  
+(no AI tools were used)
