@@ -28,5 +28,5 @@ The following webpages have interesting database operations:
 
    The queries for Details webpage joins 3 tables and left outer joins on 2 tables to assimilate information stored across multiple tables. Similarly Profile webpage has a left outerjoin between 2 tables.  A left outer join is required as there may not always exist a safety/entertainment rating provided by the user for a house.
 
- **2.  Interesting DB Workflow: Entertainment/Safety Reading**  
+ **2.  Interesting DB Workflow: Entertainment/Safety Reading in Profile page**  
    When a user rates the entertainment/safety of the listing, a new entry is made in the Gave_Entertainment_Rating/Gave_Safety_Rating tables. The average rating is then calculated from these tables and the new rating is updated in Building/House_Belongs_To_Brokered_By tables. The entertainment rating impacts all listings in that given building. 
